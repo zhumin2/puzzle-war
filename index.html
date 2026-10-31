@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消除大战 · 王者峡谷宝石对决</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f0cf7f'/%3E%3Cstop offset='1' stop-color='%23e5484d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M32 4 58 20v24L32 60 6 44V20Z' fill='url(%23g)'/%3E%3Cpath d='M32 4 32 60M6 20 58 44M6 44 58 20' stroke='%23fff' stroke-opacity='.55' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg0:#0a0e17; --bg1:#0f1522; --panel:#141c2c; --panel2:#1b2438; --line:#26324a;
+  --gold:#d4a94e; --gold-hi:#f0cf7f; --gold-dim:#8a6f2f;
+  --text:#e9e7df; --muted:#96a0b4; --faint:#5c6778;
+  --red:#e5484d; --blue:#4a8dff; --green:#3ecf6e; --yellow:#e8c14d; --purple:#a06bff; --skull:#d9d9de; --star:#ffd76a;
+  --hp:#e5484d; --ok:#3ecf6e;
+  --r-lg:14px; --r-sm:9px;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","Segoe UI",system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #16203a 0%, transparent 60%),
+    radial-gradient(900px 500px at 85% 110%, #1a1430 0%, transparent 55%),
+    var(--bg0);
+  color:var(--text); overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background-image:radial-gradient(rgba(212,169,78,.10) 1px, transparent 1.5px);
+  background-size:26px 26px;
+}
+button{font-family:inherit; cursor:pointer;}
+:focus-visible{outline:2px solid var(--gold-hi); outline-offset:2px;}
+.hidden{display:none !important;}
+
+/* ===== 顶栏 ===== */
+.topbar{
+  position:relative; z-index:30; display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; background:linear-gradient(180deg, rgba(20,28,44,.9), rgba(10,14,23,.2));
+  border-bottom:1px solid var(--line);
+}
+.topbar-logo{font-size:17px; font-weight:800; letter-spacing:2px; color:var(--gold-hi);}
+.topbar-logo b{color:var(--text); font-weight:800;}
+.icon-btn{
+  width:38px; height:38px; border-radius:10px; border:1px solid var(--line);
+  background:var(--panel); color:var(--text); display:inline-flex; align-items:center; justify-content:center;
+}
+.icon-btn:hover{border-color:var(--gold-dim);}
+.icon-btn svg{width:20px; height:20px; fill:currentColor;}
+.icon-btn .ico-muted{display:none;}
+.icon-btn.muted .ico-sound{display:none;}
+.icon-btn.muted .ico-muted{display:block; color:var(--muted);}
+.icon-btn .wave{fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round;}
+
+/* ===== 通用视图 ===== */
+.view{position:relative; z-index:5; min-height:calc(100vh - 59px);}
+.view-title{font-size:22px; font-weight:800; letter-spacing:1px; text-align:center; color:var(--gold-hi); margin-bottom:14px;}
+.btn-primary,.btn-ghost{
+  border-radius:12px; padding:12px 26px; font-size:16px; font-weight:700; letter-spacing:1px;
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.btn-primary{
+  background:linear-gradient(180deg, #f0cf7f, #d4a94e 55%, #b98a2e);
+  color:#241a05; border:1px solid #f6dd9a; box-shadow:0 6px 18px rgba(212,169,78,.35);
+}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 9px 22px rgba(212,169,78,.45);}
+.btn-primary:disabled{filter:grayscale(.7) brightness(.7); cursor:not-allowed;}
+.btn-ghost{
+  background:var(--panel); color:var(--text); border:1px solid var(--line);
+}
+.btn-ghost:hover{border-color:var(--gold-dim); color:var(--gold-hi);}
+
+/* ===== 主菜单 ===== */
+#view-menu{display:flex; align-items:center; justify-content:center; padding:22px 14px 40px;}
+.menu-inner{max-width:900px; width:100%; text-align:center;}
+.logo{
+  font-size:clamp(46px, 9vw, 78px); font-weight:900; letter-spacing:8px; line-height:1.05;
+  background:linear-gradient(180deg, #fdf3d0 8%, var(--gold-hi) 45%, #c98f2e 90%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 4px 14px rgba(212,169,78,.35));
+}
+.logo-sub{margin-top:6px; font-size:clamp(13px,2.6vw,17px); letter-spacing:5px; color:var(--muted);}
+.menu-desc{max-width:640px; margin:18px auto 0; font-size:14.5px; line-height:1.9; color:#b9c0d0;}
+.menu-heroes{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:22px auto 4px;}
+.menu-heroes .mh{width:74px; text-align:center; padding:8px 4px 6px; border-radius:12px; background:var(--panel); border:1px solid var(--line);}
+.menu-heroes .mh canvas{width:46px; height:46px; display:block; margin:0 auto;}
+.menu-heroes .mh b{display:block; font-size:12.5px; margin-top:5px; color:var(--text);}
+.menu-heroes .mh span{font-size:10.5px; color:var(--muted);}
+.menu-cta{display:flex; gap:12px; justify-content:center; margin-top:26px; flex-wrap:wrap;}
+.menu-legend{
+  margin:26px auto 0; max-width:720px; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r-lg); padding:14px 16px; display:grid; grid-template-columns:1fr 1fr; gap:9px 18px; text-align:left;
+}
+.menu-legend h3{grid-column:1/-1; font-size:14px; color:var(--gold-hi); letter-spacing:2px; margin-bottom:2px;}
+.leg-item{display:flex; align-items:center; gap:10px; font-size:13px; line-height:1.5; color:#c4c9d6;}
+.leg-item canvas{width:30px; height:30px; flex:none;}
+
+/* ===== 选人 ===== */
+#view-select{padding:20px 14px 40px;}
+.select-inner{max-width:1060px; margin:0 auto;}
+.hero-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;}
+.hero-card{
+  position:relative; background:var(--panel); border:2px solid var(--line); border-radius:var(--r-lg);
+  padding:12px; cursor:pointer; transition:border-color .15s ease, transform .15s ease; text-align:left;
+}
+.hero-card:hover{border-color:var(--gold-dim); transform:translateY(-2px);}
+.hero-card.sel{border-color:var(--gold-hi); box-shadow:0 0 0 3px rgba(212,169,78,.22), var(--shadow);}
+.hero-card .hc-top{display:flex; gap:12px;}
+.hero-card canvas.hc-avatar{width:76px; height:76px; flex:none; border-radius:50%;}
+.hero-card .hc-id{flex:1; min-width:0;}
+.hero-card .hc-name{font-size:19px; font-weight:800; letter-spacing:1px;}
+.hero-card .hc-title{font-size:12px; color:var(--gold-hi); margin-top:2px;}
+.hero-card .hc-role{display:inline-block; margin-top:7px; font-size:11px; padding:2px 9px; border-radius:20px; border:1px solid var(--line); color:var(--muted); background:var(--bg1);}
+.hero-card .hc-stats{margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px 14px;}
+.hero-card .hc-stats .st{font-size:11.5px; color:var(--muted);}
+.hero-card .hc-stats .st b{color:var(--text); font-weight:700; float:right;}
+.hero-card .hc-skills{margin-top:10px; border-top:1px dashed var(--line); padding-top:8px; display:flex; flex-direction:column; gap:5px;}
+.hero-card .hc-skills .sk{font-size:12.5px; color:#c4c9d6; line-height:1.55;}
+.hero-card .hc-skills .sk b{color:var(--gold-hi); font-weight:700;}
+.hero-card .hc-skills .sk i{font-style:normal; font-size:10.5px; color:var(--faint);}
+.select-bar{display:flex; justify-content:center; gap:12px; margin-top:22px;}
+
+/* ===== 战斗 ===== */
+#view-battle{padding:10px 10px 24px;}
+.battle-wrap{max-width:1280px; margin:0 auto; display:flex; flex-direction:column; gap:10px;}
+.panel{
+  background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--line);
+  border-radius:var(--r-lg); padding:12px;
+}
+.unit-card .uc-head{display:flex; gap:10px; align-items:center;}
+.unit-card canvas.uc-avatar{width:62px; height:62px; flex:none; border-radius:50%; background:var(--bg1);}
+.unit-card .uc-name{font-size:18px; font-weight:800; letter-spacing:1px;}
+.unit-card .uc-title{font-size:11.5px; color:var(--gold-hi); margin-top:2px;}
+.unit-card .uc-stage{font-size:11px; color:var(--muted); margin-top:2px;}
+.bar-row{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:11.5px;}
+.bar-row .lbl{width:34px; flex:none; color:var(--muted); font-size:11px;}
+.bar-row .bar{flex:1; height:11px; background:var(--bg1); border-radius:7px; overflow:hidden; border:1px solid rgba(255,255,255,.06);}
+.bar-row .bar i{display:block; height:100%; border-radius:6px; transition:width .25s ease; min-width:0;}
+.bar-row .val{width:56px; flex:none; text-align:right; font-variant-numeric:tabular-nums; color:#c9cedb; font-size:11.5px;}
+.bar-hp{height:14px !important;} .bar-hp i{background:linear-gradient(90deg,#c22f3a,var(--hp));}
+.bar-mana i{background:linear-gradient(90deg,#2f6fe0,var(--blue));}
+.bar-rage i{background:linear-gradient(90deg,#c23a3f,var(--red));}
+.bar-green i{background:linear-gradient(90deg,#2ba456,var(--green));}
+.bar-ult i{background:linear-gradient(90deg,#7a48e8,var(--purple));}
+.unit-badges{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; min-height:20px;}
+.badge{font-size:10.5px; padding:2px 8px; border-radius:10px; border:1px solid var(--line); color:#d4d9e4; background:rgba(255,255,255,.04);}
+.badge.gold{border-color:var(--gold-dim); color:var(--gold-hi);}
+.skills{margin-top:10px; border-top:1px dashed var(--line); padding-top:9px; display:flex; flex-direction:column; gap:7px;}
+.skill{
+  display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:7px 9px;
+  background:var(--bg1); border:1px solid var(--line); border-radius:11px; color:var(--text);
+  transition:border-color .12s ease, transform .12s ease, filter .12s ease;
+}
+.skill:hover:not(.off){border-color:var(--gold-dim); transform:translateX(2px);}
+.skill.off{opacity:.45; cursor:not-allowed;}
+.skill.ready{border-color:var(--gold-dim); box-shadow:0 0 0 1px rgba(212,169,78,.25);}
+.skill .sk-ico{width:34px; height:34px; flex:none; border-radius:9px; background:var(--panel2); border:1px solid var(--line); overflow:hidden;}
+.skill .sk-ico canvas{width:100%; height:100%; display:block;}
+.skill .sk-txt{flex:1; min-width:0;}
+.skill .sk-txt b{display:block; font-size:13.5px; font-weight:700;}
+.skill .sk-txt span{display:block; font-size:11px; color:var(--muted); line-height:1.45; margin-top:1px;}
+.skill .sk-cost{flex:none; font-size:11px; color:var(--gold-hi); font-variant-numeric:tabular-nums;}
+.skill.off .sk-cost{color:var(--faint);}
+.skill .sk-cd{flex:none; font-size:12px; font-weight:800; color:var(--red);}
+
+/* 战斗区域 */
+.arena{
+  flex:1; min-width:0; display:flex; flex-direction:column; gap:8px;
+  background:linear-gradient(180deg, rgba(22,32,58,.55), rgba(10,14,23,.4));
+  border:1px solid var(--line); border-radius:var(--r-lg); padding:10px;
+}
+.board-box{position:relative; width:100%; max-width:470px; margin-inline:auto; background:var(--bg1); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+.board-box canvas{display:block; width:100%; aspect-ratio:1/1; height:auto;}
+.board-label{
+  position:absolute; top:8px; left:10px; z-index:4; font-size:11.5px; letter-spacing:2px;
+  color:var(--muted); background:rgba(10,14,23,.75); padding:3px 10px; border-radius:8px; border:1px solid var(--line);
+  pointer-events:none;
+}
+.board-box.player{box-shadow:0 0 0 1px rgba(212,169,78,.28), var(--shadow);}
+.board-box .board-label{color:var(--gold);}
+.turn-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  min-height:34px; padding:5px 12px; border-radius:10px; background:var(--panel); border:1px solid var(--line);
+  font-size:13px;
+}
+.turn-banner .tb-turn{font-weight:800; letter-spacing:1px; color:var(--gold-hi);}
+.turn-banner .tb-info{color:var(--muted); font-variant-numeric:tabular-nums;}
+.turn-banner .tb-combo{color:var(--red); font-weight:800;}
+
+/* 敌方卡（紧凑） */
+.unit-card.enemy .skills{display:flex; flex-direction:row; flex-wrap:wrap; gap:6px;}
+.unit-card.enemy .skill{width:calc(50% - 3px); min-width:150px; cursor:default; opacity:.9;}
+.unit-card.enemy .skill:hover:not(.off){transform:none; border-color:var(--line);}
+.e-stage{display:flex; justify-content:space-between; align-items:center; margin-top:9px; font-size:12px; color:var(--muted);}
+.e-stage b{color:var(--gold-hi); font-weight:700;}
+
+/* 结算弹层 */
+.overlay{
+  position:fixed; inset:0; z-index:60; background:rgba(5,8,14,.78); backdrop-filter:blur(3px);
+  display:flex; align-items:center; justify-content:center; padding:18px;
+}
+.overlay-card{
+  max-width:520px; width:100%; background:linear-gradient(180deg, var(--panel2), var(--panel));
+  border:1px solid var(--gold-dim); border-radius:18px; padding:26px 22px; text-align:center; box-shadow:var(--shadow);
+  animation:popin .28s cubic-bezier(.22,1,.36,1);
+}
+@keyframes popin{from{transform:scale(.92); opacity:0;} to{transform:scale(1); opacity:1;}}
+.overlay-card h2{font-size:26px; font-weight:900; letter-spacing:3px; color:var(--gold-hi); margin-bottom:8px;}
+.overlay-card.win h2{color:var(--gold-hi);}
+.overlay-card.lose h2{color:var(--red);}
+.overlay-card p.sub{color:var(--muted); font-size:13.5px; line-height:1.7; margin-bottom:14px;}
+.ov-stats{display:flex; justify-content:center; gap:10px; margin:14px 0 20px; flex-wrap:wrap;}
+.ov-stat{background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 16px; min-width:90px;}
+.ov-stat b{display:block; font-size:20px; color:var(--gold-hi); font-variant-numeric:tabular-nums;}
+.ov-stat span{font-size:11.5px; color:var(--muted);}
+.ov-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+
+/* 帮助弹层 */
+.modal{
+  position:fixed; inset:0; z-index:55; background:rgba(5,8,14,.7); display:flex; align-items:center; justify-content:center; padding:16px;
+}
+.modal-card{max-width:560px; width:100%; max-height:86vh; overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:var(--shadow);}
+.modal-card h3{font-size:17px; color:var(--gold-hi); letter-spacing:2px; margin-bottom:10px;}
+.modal-card p{font-size:13.5px; color:#c4c9d6; line-height:1.8; margin-bottom:8px;}
+.modal-legend{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:10px;}
+.modal-legend .leg-item{font-size:12.5px;}
+
+/* 阶段横幅 */
+.stage-banner{
+  position:fixed; left:50%; top:18%; transform:translateX(-50%); z-index:50; text-align:center; pointer-events:none;
+  animation:bannerIn 1.6s ease forwards;
+}
+@keyframes bannerIn{0%{opacity:0; transform:translateX(-50%) scale(.8);} 12%{opacity:1; transform:translateX(-50%) scale(1);} 82%{opacity:1;} 100%{opacity:0; transform:translateX(-50%) scale(1.05);}}
+.stage-banner .sb-tag{font-size:13px; letter-spacing:6px; color:var(--gold-hi);}
+.stage-banner .sb-name{font-size:34px; font-weight:900; letter-spacing:4px; color:#fff; text-shadow:0 3px 18px rgba(212,169,78,.5); margin-top:4px;}
+.stage-banner .sb-desc{font-size:13px; color:var(--muted); margin-top:6px;}
+
+/* 战斗右下角操作条 */
+.battle-foot{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:2px;}
+.battle-foot .hint{font-size:11.5px; color:var(--muted);}
+
+/* 飘字 */
+.floater{
+  position:fixed; z-index:80; font-size:20px; font-weight:900; letter-spacing:1px; pointer-events:none;
+  transform:translateX(-50%); animation:floatUp 1.05s cubic-bezier(.22,1,.36,1) forwards;
+  text-shadow:0 2px 8px rgba(0,0,0,.6); font-variant-numeric:tabular-nums;
+}
+.floater.dmg{color:#ff7b7b;}
+.floater.dmg.crit{color:#ffd76a; font-size:26px;}
+.floater.heal{color:#7ef0a0;}
+.floater.shield{color:#9fc3ff; font-size:15px;}
+.floater.toast{color:#e9e7df; font-size:14px; font-weight:700;}
+@keyframes floatUp{
+  0%{opacity:0; transform:translateX(-50%) translateY(8px);}
+  12%{opacity:1;}
+  100%{opacity:0; transform:translateX(-50%) translateY(-44px);}
+}
+
+/* ===== 桌面布局 ===== */
+@media (min-width:1100px){
+  .battle-wrap{flex-direction:row; align-items:stretch;}
+  .panel.side{width:300px; flex:none;}
+  .unit-card.enemy .skill{width:100%; min-width:0;}
+  .menu-legend{grid-template-columns:1fr 1fr;}
+  .hero-grid{grid-template-columns:repeat(3,1fr);}
+  .board-box{max-width:560px;}
+}
+@media (min-width:1500px){
+  .panel.side{width:330px;}
+}
+@media (max-width:520px){
+  .menu-legend,.modal-legend{grid-template-columns:1fr;}
+  .hero-grid{grid-template-columns:1fr;}
+}
+@media (max-width:1099px){
+  .battle-wrap .panel.side:last-child{order:1;}
+  .battle-wrap .arena{order:2;}
+  .battle-wrap .panel.side:first-child{order:3;}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important; transition-duration:.01ms !important;}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">消除<b>大战</b></div>
+  <div class="topbar-right">
+    <button id="muteBtn" class="icon-btn" title="声音开关" aria-label="声音开关" role="switch" aria-checked="true">
+      <svg class="ico-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M18 5.8a8.5 8.5 0 0 1 0 12.4"/></svg>
+      <svg class="ico-muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9.5 20.5 14M20.5 9.5 16 14"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="app">
+
+  <!-- ===== 视图：主菜单 ===== -->
+  <section id="view-menu" class="view">
+    <div class="menu-inner">
+      <div class="logo">消除大战</div>
+      <div class="logo-sub">王者峡谷 · 宝石对决</div>
+      <p class="menu-desc">继承《战神的挑战》的回合制三消对战：匹配红宝石积攒战意、蓝宝石凝聚法力、绿宝石回复生命、黄宝石叠加护盾、紫宝石充能终极，用骷髅与英雄技能击溃对手。</p>
+      <div class="menu-heroes" id="menuHeroes"></div>
+      <div class="menu-cta">
+        <button class="btn-primary" id="btnStart">开始游戏</button>
+        <button class="btn-ghost" id="btnHelpMenu">玩法说明</button>
+      </div>
+      <div class="menu-legend" id="menuLegend"></div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：选人 ===== -->
+  <section id="view-select" class="view hidden">
+    <div class="select-inner">
+      <h2 class="view-title">选择英雄</h2>
+      <div class="hero-grid" id="heroGrid"></div>
+      <div class="select-bar">
+        <button class="btn-ghost" id="btnBackMenu">返回</button>
+        <button class="btn-primary" id="btnEnterBattle" disabled>进入战斗</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：战斗 ===== -->
+  <section id="view-battle" class="view hidden">
+    <div class="battle-wrap">
+      <aside class="panel side" aria-label="我方英雄">
+        <div class="unit-card" id="pCard"></div>
+      </aside>
+      <div class="arena">
+        <div class="turn-banner">
+          <span class="tb-turn" id="tbTurn">你的回合</span>
+          <span class="tb-combo hidden" id="tbCombo"></span>
+          <span class="tb-info" id="tbInfo">第 1 回合</span>
+        </div>
+        <div class="board-box player"><div class="board-label">峡谷战场 · 双方共用一个棋盘</div><canvas id="board"></canvas></div>
+      </div>
+      <aside class="panel side" aria-label="敌方英雄">
+        <div class="unit-card enemy" id="eCard"></div>
+      </aside>
+    </div>
+    <div class="battle-foot" style="max-width:1280px;margin:8px auto 0;padding:0 4px;">
+      <span class="hint">点击相邻宝石交换 / 拖拽交换 · 连击越高伤害越强</span>
+      <button class="btn-ghost" id="btnHelpBattle" style="padding:7px 16px;font-size:13px;">帮助</button>
+    </div>
+  </section>
+</div>
+
+<!-- ===== 结算弹层 ===== -->
+<div id="resultOverlay" class="overlay hidden">
+  <div class="overlay-card" id="resultCard">
+    <h2 id="resultTitle">胜利</h2>
+    <p class="sub" id="resultSub"></p>
+    <div class="ov-stats" id="resultStats"></div>
+    <div class="ov-actions">
+      <button class="btn-ghost" id="btnResultSelect">返回选人</button>
+      <button class="btn-primary" id="btnResultRetry">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 帮助弹层 ===== -->
+<div id="helpModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>玩法说明</h3>
+    <p>交换相邻宝石，横竖凑齐 3 颗或以上即可消除并触发效果。消除后宝石下落、可能产生连锁（连击），连击会放大骷髅伤害。双方<b style="color:var(--gold)">共用一个棋盘</b>，回合交替：你的消除让骷髅击伤敌方、能量归你；敌方的消除让骷髅击伤你、其余宝石回复敌方生命。</p>
+    <div class="modal-legend" id="modalLegend"></div>
+    <p style="margin-top:12px;">英雄技能分别消耗<b style="color:var(--blue)">法力</b>（蓝）、<b style="color:var(--red)">战意</b>（红）、<b style="color:var(--green)">自然之力</b>（绿）与<b style="color:var(--purple)">终极能量</b>（紫）。消灭 3 名 Boss 即为通关。</p>
+    <div style="text-align:right; margin-top:14px;"><button class="btn-ghost" id="btnHelpClose" style="padding:8px 22px;">知道了</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ===== 常量与数据 =====
+const ROWS = 8, COLS = 8;
+const RES_MAX = 100;
+
+const TILE_TYPES = {
+  red:    { key:'red',    name:'红宝石', color:'#e5484d', icon:'tear',    short:'红' },
+  blue:   { key:'blue',   name:'蓝宝石', color:'#4a8dff', icon:'drop',    short:'蓝' },
+  green:  { key:'green',  name:'绿宝石', color:'#3ecf6e', icon:'leaf',    short:'绿' },
+  yellow: { key:'yellow', name:'黄宝石', color:'#e8c14d', icon:'coin',    short:'黄' },
+  purple: { key:'purple', name:'紫宝石', color:'#a06bff', icon:'crystal', short:'紫' },
+  skull:  { key:'skull',  name:'骷髅',   color:'#d9d9de', icon:'skull',   short:'骨' },
+  star:   { key:'star',   name:'星星',   color:'#ffd76a', icon:'star',    short:'星' },
+};
+// 权重：宝石出现概率（骷髅偏多制造对抗压力，星星稀有）
+const TILE_WEIGHTS = [
+  ['red',13], ['blue',13], ['green',13], ['yellow',12], ['purple',10], ['skull',22], ['star',5],
+];
+
+// 宝石消除效果（每颗）
+const GEM_EFFECT = {
+  red:    { rage:3 },                     // 战意：驱动攻击技能
+  blue:   { mana:4 },                     // 法力：驱动法术技能
+  green:  { green:2, heal:2 },            // 自然之力 + 少量回复
+  yellow: { shield:2 },                   // 护盾值
+  purple: { ult:12 },                     // 终极能量
+  skull:  { dmg:0 },                      // 骷髅：按消除颗数直接伤害（3连=5，每多1颗+2）
+  star:   { mana:5, rage:5, green:5, ult:10, extra:true },
+};
+
+// 英雄
+const HEROES = [
+  {
+    id:'arthur', name:'亚瑟', title:'圣剑骑士', role:'战士', sigil:'sword', color:'#d4a94e',
+    hp:120, atk:10, armor:3, crit:5,
+    passive: { name:'圣光祝福', icon:'cross', desc:'每回合结束回复 2% 最大生命' },
+    skills: [
+      { name:'誓约之盾', type:'mana', cost:30, icon:'shield', desc:'获得护盾：15% 最大生命',
+        cast(p,e){ const v=Math.round(p.maxHp*0.15); return [{type:'shield', v}]; } },
+      { name:'回旋打击', type:'rage', cost:40, icon:'sword', desc:'造成 攻击×1.6 伤害',
+        cast(p,e){ return physHit(p,e,1.6); } },
+      { name:'圣剑裁决', type:'ult', cost:100, icon:'crown', desc:'攻击×3.0 伤害并眩晕敌方 1 回合',
+        cast(p,e){ return [physHit(p,e,3.0)[0], {type:'stun', turns:1}]; } },
+    ],
+  },
+  {
+    id:'daji', name:'妲己', title:'魅惑妖狐', role:'法师', sigil:'fox', color:'#ff8f6b',
+    hp:85, atk:13, armor:1, crit:8,
+    passive: { name:'狐火', icon:'flame', desc:'每次消除蓝色宝石额外 +1 法力' },
+    skills: [
+      { name:'灵魂冲击', type:'mana', cost:25, icon:'orb', desc:'造成 攻击×1.3 + 18 伤害',
+        cast(p,e){ return physHit(p,e,1.3,{flat:18}); } },
+      { name:'妖狐魅惑', type:'mana', cost:45, icon:'heart', desc:'魅惑敌方，使其下回合无法行动',
+        cast(p,e){ return [{type:'stun', turns:1}]; } },
+      { name:'女王崇拜', type:'ult', cost:100, icon:'crown', desc:'5 段连击，每段 攻击×0.85',
+        cast(p,e){ return multiHit(p,e,5,0.85); } },
+    ],
+  },
+  {
+    id:'houyi', name:'后羿', title:'落日神箭', role:'射手', sigil:'bow', color:'#7ad0ff',
+    hp:95, atk:15, armor:2, crit:15,
+    passive: { name:'惩戒射击', icon:'bolt', desc:'暴击率 +15%（暴击伤害 150%）' },
+    skills: [
+      { name:'多重箭矢', type:'rage', cost:35, icon:'bow', desc:'3 支箭矢，每支 攻击×0.8（可暴击）',
+        cast(p,e){ return multiHit(p,e,3,0.8); } },
+      { name:'落日余晖', type:'mana', cost:30, icon:'sun', desc:'攻击×1.9 并降低敌方攻击 25%（1 回合）',
+        cast(p,e){ return [physHit(p,e,1.9)[0], {type:'buff', key:'atkDown', val:0.25, turns:1}]; } },
+      { name:'日之塔·最终兵器', type:'ult', cost:100, icon:'star', desc:'攻击×4.5，必定暴击',
+        cast(p,e){ return physHit(p,e,4.5,{forceCrit:true}); } },
+    ],
+  },
+  {
+    id:'caiwenji', name:'蔡文姬', title:'胡笳医仙', role:'辅助', sigil:'harp', color:'#8ee08e',
+    hp:105, atk:9, armor:2, crit:5,
+    passive: { name:'思无邪', icon:'note', desc:'每回合结束回复 3% 最大生命' },
+    skills: [
+      { name:'胡笳乐', type:'green', cost:25, icon:'harp', desc:'回复 攻击×1.6 + 15 生命',
+        cast(p,e){ const v=Math.round(p.atk*1.6+15); return [{type:'heal', v}]; } },
+      { name:'忘忧曲', type:'mana', cost:30, icon:'note', desc:'回复 攻击×1.2+12 生命并获得 8% 护盾',
+        cast(p,e){ const h=Math.round(p.atk*1.2+12); const s=Math.round(p.maxHp*0.08);
+          return [{type:'heal', v:h},{type:'shield', v:s}]; } },
+      { name:'大悲咒·安魂曲', type:'ult', cost:100, icon:'cross', desc:'回复 45% 最大生命并获得 20% 护盾',
+        cast(p,e){ const h=Math.round(p.maxHp*0.45); const s=Math.round(p.maxHp*0.2);
+          return [{type:'heal', v:h},{type:'shield', v:s}]; } },
+    ],
+  },
+  {
+    id:'libai', name:'李白', title:'青莲剑仙', role:'刺客', sigil:'cup', color:'#c9a7ff',
+    hp:90, atk:14, armor:1, crit:12,
+    passive: { name:'侠客行', icon:'sword', desc:'本回合连击≥2 时，每层连击使技能伤害 +4%' },
+    skills: [
+      { name:'将进酒', type:'rage', cost:35, icon:'cup', desc:'2 连击，每击 攻击×1.0（可暴击）',
+        cast(p,e){ return multiHit(p,e,2,1.0); } },
+      { name:'神来之笔', type:'mana', cost:30, icon:'pen', desc:'攻击×1.7 并降低敌方护甲 50%（1 回合）',
+        cast(p,e){ return [physHit(p,e,1.7)[0], {type:'buff', key:'armorDown', val:0.5, turns:1}]; } },
+      { name:'青莲剑歌', type:'ult', cost:100, icon:'moon', desc:'5 段连斩，每段 攻击×0.9（可暴击）',
+        cast(p,e){ return multiHit(p,e,5,0.9); } },
+    ],
+  },
+  {
+    id:'zhangfei', name:'张飞', title:'燕人狂战', role:'坦克', sigil:'axe', color:'#ff9f43',
+    hp:145, atk:11, armor:4, crit:5,
+    passive: { name:'狂兽之心', icon:'claw', desc:'每损失 15% 最大生命，攻击 +8%' },
+    skills: [
+      { name:'画地为牢', type:'rage', cost:30, icon:'shield', desc:'攻击×1.2 并获得 10% 护盾',
+        cast(p,e){ const s=Math.round(p.maxHp*0.1); return [physHit(p,e,1.2)[0], {type:'shield', v:s}]; } },
+      { name:'守护机关', type:'green', cost:25, icon:'shield', desc:'获得 20% 最大生命护盾',
+        cast(p,e){ const v=Math.round(p.maxHp*0.2); return [{type:'shield', v}]; } },
+      { name:'狂兽血性', type:'ult', cost:100, icon:'claw', desc:'回复 35% 生命，攻击 +35%（2 回合）',
+        cast(p,e){ const h=Math.round(p.maxHp*0.35);
+          return [{type:'heal', v:h},{type:'buff', key:'atkUp', val:0.35, turns:2}]; } },
+    ],
+  },
+];
+
+// Boss（三阶段试炼）
+const BOSSES = [
+  {
+    id:'crab', name:'河道之灵·河蟹', title:'第一试炼 · 峡谷边缘', sigil:'claw', color:'#4fb286',
+    hp:130, atk:8, armor:0, crit:0,
+    skills:[
+      { name:'挥钳', cd:4, icon:'claw', desc:'攻击×1.5',
+        cast(e,p){ return physHit(e,p,1.5); } },
+      { name:'硬化', cd:5, icon:'shield', desc:'获得 5 点护盾',
+        cast(e,p){ return [{type:'shield', v:5}]; } },
+    ],
+  },
+  {
+    id:'lord', name:'暴君·主宰', title:'第二试炼 · 深渊腹地', sigil:'horn', color:'#a06bff',
+    hp:230, atk:11, armor:2, crit:0,
+    skills:[
+      { name:'黑暗冲击', cd:4, icon:'bolt', desc:'攻击×2.0',
+        cast(e,p){ return physHit(e,p,2.0); } },
+      { name:'主宰降临', cd:7, icon:'crown', desc:'回复 10% 最大生命',
+        cast(e,p){ const v=Math.round(e.maxHp*0.1); return [{type:'heal', v}]; } },
+    ],
+  },
+  {
+    id:'dragon', name:'风暴龙王', title:'最终试炼 · 王者之巅', sigil:'crown', color:'#e8c14d',
+    hp:330, atk:14, armor:3, crit:0,
+    skills:[
+      { name:'龙息', cd:4, icon:'flame', desc:'攻击×2.2',
+        cast(e,p){ return physHit(e,p,2.2); } },
+      { name:'雷暴', cd:6, icon:'bolt', desc:'攻击×1.6 并降低我方攻击 25%（1 回合）',
+        cast(e,p){ return [physHit(e,p,1.6)[0], {type:'buff', key:'atkDown', val:0.25, turns:1}]; } },
+      { name:'龙王威压', cd:9, icon:'crown', desc:'降低我方攻击 20%（1 回合）',
+        cast(e,p){ return [{type:'buff', key:'atkDown', val:0.2, turns:1}]; } },
+    ],
+  },
+];
+
+// 玩法图例
+const LEGEND = [
+  { type:'red',    desc:'积攒战意，驱动攻击类技能' },
+  { type:'blue',   desc:'凝聚法力，驱动法术与辅助技能' },
+  { type:'green',  desc:'回复生命，并积攒自然之力' },
+  { type:'yellow', desc:'叠加护盾，抵消受到的伤害' },
+  { type:'purple', desc:'充能终极能量，攒满 100 释放大招' },
+  { type:'skull',  desc:'消除即对敌方造成伤害，连击放大' },
+  { type:'star',   desc:'获得额外回合，并小幅回复所有能量' },
+];
+// ===== 工具函数 =====
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const sum = arr => arr.reduce((s, v) => s + v, 0);
+const wait = ms => new Promise(res => setTimeout(res, ms));
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+
+function weightedPick(weights){
+  const total = sum(weights.map(w => w[1]));
+  let r = Math.random() * total;
+  for (const [key, w] of weights){ if (r < w) return key; r -= w; }
+  return weights[weights.length - 1][0];
+}
+
+// canvas 高清适配（返回逻辑尺寸下的 ctx 与宽高）
+function fitCanvas(cv){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = cv.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
+  cv.width = w * dpr; cv.height = h * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+function drawRoundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function shade(hex, pct){
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = clamp(Math.round(pct > 0 ? r + (255 - r) * pct : r * (1 + pct)), 0, 255);
+  g = clamp(Math.round(pct > 0 ? g + (255 - g) * pct : g * (1 + pct)), 0, 255);
+  b = clamp(Math.round(pct > 0 ? b + (255 - b) * pct : b * (1 + pct)), 0, 255);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// ===== 音频（WebAudio 合成音效，首次点击后启用） =====
+const Sfx = {
+  ctx: null, muted: false,
+  init(){
+    if (this.ctx){ if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.35;
+    this.master.connect(this.ctx.destination);
+  },
+  tone(freq, dur, type, vol, delay, slide){
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + (delay || 0);
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t0 + dur);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(vol || 0.4, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  },
+  match(){ this.tone(520, .09, 'triangle', .5); this.tone(780, .12, 'triangle', .3, .04); },
+  cascade(){ this.tone(660, .1, 'triangle', .4, 0, 160); },
+  swap(){ this.tone(300, .06, 'sine', .28); },
+  invalid(){ this.tone(150, .12, 'square', .18); },
+  damage(){ this.tone(170, .16, 'sawtooth', .4, 0, -70); },
+  heal(){ this.tone(560, .14, 'sine', .38); this.tone(740, .16, 'sine', .26, .05); },
+  skill(){ this.tone(440, .12, 'square', .28); this.tone(660, .16, 'square', .22, .06); },
+  ult(){ this.tone(220, .3, 'sawtooth', .35, 0, 220); this.tone(880, .35, 'triangle', .28, .08); },
+  stun(){ this.tone(240, .22, 'sine', .3, 0, -120); },
+  turn(){ this.tone(420, .08, 'sine', .22); },
+  win(){ [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .3, 'triangle', .4, i * .14)); },
+  lose(){ [392, 330, 262, 196].forEach((f, i) => this.tone(f, .35, 'sine', .35, i * .16)); },
+};
+// ===== 绘制：宝石 / 徽记 =====
+// 宝石中央符号（16×16 空间，中心 0,0）
+function drawGlyph(ctx, key){
+  ctx.beginPath();
+  switch (key){
+    case 'tear':
+      ctx.moveTo(0, -7); ctx.bezierCurveTo(5, -1, 5, 4, 0, 7); ctx.bezierCurveTo(-5, 4, -5, -1, 0, -7); break;
+    case 'drop':
+      ctx.moveTo(0, -7); ctx.quadraticCurveTo(5, 0, 3, 5); ctx.arc(0, 5, 3, 0, Math.PI, true); ctx.quadraticCurveTo(-5, 0, 0, -7); break;
+    case 'leaf':
+      ctx.moveTo(0, -7); ctx.bezierCurveTo(6, -2, 6, 6, 0, 7); ctx.bezierCurveTo(-6, 6, -6, -2, 0, -7);
+      ctx.moveTo(0, -7); ctx.lineTo(0, 7); break;
+    case 'coin':
+      ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 3.2, 0, Math.PI * 2); ctx.stroke();
+      return;
+    case 'crystal':
+      ctx.moveTo(0, -7); ctx.lineTo(5, -2); ctx.lineTo(3, 6); ctx.lineTo(-3, 6); ctx.lineTo(-5, -2); ctx.closePath(); break;
+    case 'skull':
+      ctx.arc(0, -1.5, 4.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(16,20,30,.85)';
+      ctx.beginPath(); ctx.arc(-1.8, -1.8, 1.25, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(1.8, -1.8, 1.25, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.rect(-1.3, 1.2, 2.6, 2.4); ctx.fill();
+      return;
+    case 'star':
+      for (let i = 0; i < 10; i++){
+        const ang = -Math.PI / 2 + i * Math.PI / 5;
+        const rad = i % 2 === 0 ? 7 : 3;
+        const x = Math.cos(ang) * rad, y = Math.sin(ang) * rad;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.closePath(); break;
+    default: ctx.arc(0, 0, 6, 0, Math.PI * 2); break;
+  }
+  ctx.fill();
+}
+
+function drawGem(ctx, cx, cy, r, color, icon){
+  const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  grad.addColorStop(0, shade(color, .4)); grad.addColorStop(.5, color); grad.addColorStop(1, shade(color, -.3));
+  drawRoundRect(ctx, cx - r, cy - r, r * 2, r * 2, r * .32);
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.save();
+  drawRoundRect(ctx, cx - r, cy - r, r * 2, r * 2, r * .32); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.30)';
+  ctx.beginPath(); ctx.ellipse(cx - r * .45, cy - r * .5, r * .5, r * .28, -.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.10)';
+  ctx.beginPath(); ctx.ellipse(cx + r * .4, cy + r * .5, r * .6, r * .35, .5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.lineWidth = Math.max(1, r * .06); ctx.strokeStyle = 'rgba(255,255,255,.22)';
+  drawRoundRect(ctx, cx - r, cy - r, r * 2, r * 2, r * .32); ctx.stroke();
+  ctx.save();
+  ctx.translate(cx, cy); ctx.scale(r / 16, r / 16);
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  drawGlyph(ctx, icon);
+  ctx.restore();
+}
+
+function drawTile(ctx, cx, cy, r, type){
+  const t = TILE_TYPES[type];
+  ctx.save();
+  ctx.shadowColor = t.color; ctx.shadowBlur = Math.max(2, r * .55);
+  drawGem(ctx, cx, cy, r, t.color, t.icon);
+  ctx.restore();
+}
+
+function drawMiniGem(cv, key){
+  const { ctx, w } = fitCanvas(cv);
+  drawTile(ctx, w / 2, w / 2, w * .42, key);
+}
+
+// 英雄/敌人徽记符号（100×100 空间，中心 0,0，由调用方平移缩放）
+function drawSigil(ctx, key, cx, cy, s, color){
+  ctx.save();
+  ctx.translate(cx, cy); ctx.scale(s / 100, s / 100);
+  ctx.fillStyle = color; ctx.strokeStyle = color;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 6;
+  switch (key){
+    case 'sword':
+      ctx.beginPath(); ctx.moveTo(-4, -30); ctx.lineTo(4, -30); ctx.lineTo(5, 6); ctx.lineTo(2, 10); ctx.lineTo(-2, 10); ctx.closePath(); ctx.fill();
+      ctx.fillRect(-14, 2, 28, 6); ctx.fillRect(-3, 8, 6, 14);
+      ctx.beginPath(); ctx.arc(0, 24, 5.5, 0, Math.PI * 2); ctx.fill(); break;
+    case 'shield':
+      ctx.beginPath();
+      ctx.moveTo(0, -34); ctx.quadraticCurveTo(34, -28, 34, 0); ctx.quadraticCurveTo(34, 32, 0, 42);
+      ctx.quadraticCurveTo(-34, 32, -34, 0); ctx.quadraticCurveTo(-34, -28, 0, -34); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, 26); ctx.stroke(); break;
+    case 'bow':
+      ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 2, 30, -Math.PI * .85, -Math.PI * .15); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-26.7, -11.6); ctx.lineTo(26.7, -11.6); ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(-16, -22); ctx.lineTo(16, 18); ctx.stroke();
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(16, 18); ctx.lineTo(22, 28); ctx.lineTo(28, 14); ctx.closePath(); ctx.fill(); break;
+    case 'harp':
+      ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-17, -32); ctx.lineTo(-17, 30); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(17, -32); ctx.quadraticCurveTo(21, 0, 17, 30); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++){ const x = -11 + i * 5.5; ctx.beginPath(); ctx.moveTo(x, -18); ctx.lineTo(x - 1, 26); ctx.stroke(); }
+      ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-19, -32); ctx.lineTo(19, -32); ctx.stroke(); break;
+    case 'fox':
+      ctx.beginPath();
+      ctx.moveTo(0, 38); ctx.bezierCurveTo(34, 20, 40, -20, 12, -32);
+      ctx.bezierCurveTo(24, -10, 12, 4, 0, 4); ctx.bezierCurveTo(-6, 4, -10, 8, -8, 14); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(-18, -6, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(16,20,30,.9)'; ctx.beginPath(); ctx.arc(-20.5, -8, 3, 0, Math.PI * 2); ctx.fill(); break;
+    case 'axe':
+      ctx.fillRect(-3, -40, 6, 80);
+      ctx.beginPath(); ctx.moveTo(6, -26); ctx.arc(0, -26, 20, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.fill(); break;
+    case 'cup':
+      ctx.beginPath();
+      ctx.moveTo(-18, -30); ctx.quadraticCurveTo(0, -16, 18, -30); ctx.lineTo(12, 2); ctx.quadraticCurveTo(0, 8, -12, 2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.beginPath(); ctx.moveTo(-14, -26); ctx.quadraticCurveTo(0, -18, 14, -26); ctx.lineTo(10, -12); ctx.quadraticCurveTo(0, -8, -10, -12); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = color; ctx.fillRect(-4, 4, 8, 22);
+      ctx.beginPath(); ctx.moveTo(-20, 30); ctx.lineTo(20, 30); ctx.lineTo(16, 38); ctx.lineTo(-16, 38); ctx.closePath(); ctx.fill(); break;
+    case 'cross': ctx.fillRect(-8, -36, 16, 72); ctx.fillRect(-36, -8, 72, 16); break;
+    case 'orb':
+      ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, 0, 15, .4, 4.2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 15, -2.2, 1.8); ctx.stroke(); break;
+    case 'heart':
+      ctx.beginPath();
+      ctx.moveTo(0, 30); ctx.bezierCurveTo(-34, 6, -28, -26, -8, -20);
+      ctx.bezierCurveTo(0, -17, 0, -8, 0, -4); ctx.bezierCurveTo(0, -8, 0, -17, 8, -20);
+      ctx.bezierCurveTo(28, -26, 34, 6, 0, 30); ctx.closePath(); ctx.fill(); break;
+    case 'bolt':
+      ctx.beginPath(); ctx.moveTo(8, -38); ctx.lineTo(-20, 2); ctx.lineTo(-2, 2); ctx.lineTo(-8, 38); ctx.lineTo(20, -6); ctx.lineTo(2, -6); ctx.closePath(); ctx.fill(); break;
+    case 'sun':
+      ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 6;
+      for (let i = 0; i < 8; i++){
+        const a = i * Math.PI / 4;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * 30, Math.sin(a) * 30); ctx.lineTo(Math.cos(a) * 42, Math.sin(a) * 42); ctx.stroke();
+      } break;
+    case 'pen':
+      ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(20, -24); ctx.quadraticCurveTo(-6, -6, -16, 24); ctx.stroke();
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(-20, 28); ctx.lineTo(-12, 26); ctx.lineTo(-16, 34); ctx.closePath(); ctx.fill(); break;
+    case 'moon':
+      ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.arc(16, -8, 26, 0, Math.PI * 2, true); ctx.fill('evenodd'); break;
+    case 'crown':
+      ctx.beginPath();
+      ctx.moveTo(-26, 20); ctx.lineTo(-30, -20); ctx.lineTo(-12, -6); ctx.lineTo(0, -28); ctx.lineTo(12, -6); ctx.lineTo(30, -20); ctx.lineTo(26, 20);
+      ctx.closePath(); ctx.fill(); ctx.fillRect(-30, 20, 60, 10); break;
+    case 'claw':
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(-30, 30); ctx.quadraticCurveTo(-36, -10, -22, -32); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, 30); ctx.quadraticCurveTo(-6, -14, 8, -40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(30, 30); ctx.quadraticCurveTo(24, -18, 38, -46); ctx.stroke(); break;
+    case 'horn':
+      ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.moveTo(-26, 24); ctx.quadraticCurveTo(-40, -16, -10, -30); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(26, 24); ctx.quadraticCurveTo(40, -16, 10, -30); ctx.stroke();
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(0, -6, 12, 0, Math.PI * 2); ctx.fill(); break;
+    case 'flame':
+      ctx.beginPath();
+      ctx.moveTo(0, 38); ctx.bezierCurveTo(-20, 16, -20, -4, -6, -20);
+      ctx.bezierCurveTo(2, -28, 2, -36, 8, -40); ctx.bezierCurveTo(8, -16, 22, -6, 22, 12);
+      ctx.bezierCurveTo(22, 28, 12, 38, 0, 38); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.beginPath(); ctx.moveTo(0, 30); ctx.bezierCurveTo(-10, 16, -10, 4, -2, -6);
+      ctx.bezierCurveTo(2, 2, 6, 8, 6, 16); ctx.closePath(); ctx.fill(); break;
+    case 'note':
+      ctx.beginPath(); ctx.ellipse(-20, 22, 10, 7, -.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(-17, -22, 6, 44);
+      ctx.beginPath(); ctx.ellipse(4, 16, 10, 7, -.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(12, -26, 6, 42); break;
+    default: ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill(); break;
+  }
+  ctx.restore();
+}
+
+function drawEmblem(cv, def){
+  const { ctx, w } = fitCanvas(cv);
+  const cx = w / 2, cy = w / 2, R = w / 2;
+  const bg = ctx.createRadialGradient(cx, cy - R * .2, R * .08, cx, cy, R * 1.1);
+  bg.addColorStop(0, '#242e46'); bg.addColorStop(1, '#0e1320');
+  ctx.beginPath(); ctx.arc(cx, cy, R * .96, 0, Math.PI * 2); ctx.fillStyle = bg; ctx.fill();
+  ctx.lineWidth = Math.max(2, w * .055); ctx.strokeStyle = def.color;
+  ctx.beginPath(); ctx.arc(cx, cy, R * .9, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = Math.max(1.5, w * .03); ctx.strokeStyle = 'rgba(212,169,78,.55)';
+  ctx.beginPath(); ctx.arc(cx, cy, R * .8, 0, Math.PI * 2); ctx.stroke();
+  drawSigil(ctx, def.sigil, cx, cy, w * .82, def.color);
+}
+
+function drawSkillIcon(cv, key, color){
+  const { ctx, w } = fitCanvas(cv);
+  drawRoundRect(ctx, 1, 1, w - 2, w - 2, w * .24);
+  ctx.fillStyle = '#10141f'; ctx.fill();
+  ctx.lineWidth = Math.max(1, w * .06); ctx.strokeStyle = 'rgba(212,169,78,.4)';
+  drawRoundRect(ctx, 1, 1, w - 2, w - 2, w * .24); ctx.stroke();
+  drawSigil(ctx, key, w / 2, w / 2, w * .76, color);
+}
+
+// ===== 棋盘核心 =====
+const POP_MS = 170, FALL_MS = 150;
+
+function makeTile(r, c, type){
+  return { type: type || weightedPick(TILE_WEIGHTS), row: r, col: c, scale: 1, alpha: 1 };
+}
+
+function makeGrid(){
+  for (let attempt = 0; attempt < 80; attempt++){
+    const g = [];
+    for (let r = 0; r < ROWS; r++){
+      g[r] = [];
+      for (let c = 0; c < COLS; c++){
+        let type;
+        do { type = weightedPick(TILE_WEIGHTS); }
+        while ((c >= 2 && g[r][c - 1].type === type && g[r][c - 2].type === type) ||
+               (r >= 2 && g[r - 1][c].type === type && g[r - 2][c].type === type));
+        g[r][c] = makeTile(r, c, type);
+      }
+    }
+    if (hasValidMove(g)) return g;
+  }
+  const g = [];
+  for (let r = 0; r < ROWS; r++){ g[r] = []; for (let c = 0; c < COLS; c++) g[r][c] = makeTile(r, c); }
+  return g;
+}
+
+function cloneGrid(g){ return g.map(row => row.map(t => ({ type: t.type }))); }
+
+function findMatches(g){
+  const runs = [], cells = new Set(), cellArr = [];
+  const addRun = (cl, type, len) => {
+    runs.push({ type, len });
+    for (const [r, c] of cl){ const k = r + ',' + c; if (!cells.has(k)){ cells.add(k); cellArr.push({ r, c }); } }
+  };
+  for (let r = 0; r < ROWS; r++){
+    let c = 0;
+    while (c < COLS){
+      const t = g[r][c];
+      if (!t){ c++; continue; }
+      let end = c;
+      while (end + 1 < COLS && g[r][end + 1] && g[r][end + 1].type === t.type) end++;
+      const len = end - c + 1;
+      if (len >= 3){ const cl = []; for (let k = c; k <= end; k++) cl.push([r, k]); addRun(cl, t.type, len); }
+      c = end + 1;
+    }
+  }
+  for (let c = 0; c < COLS; c++){
+    let r = 0;
+    while (r < ROWS){
+      const t = g[r][c];
+      if (!t){ r++; continue; }
+      let end = r;
+      while (end + 1 < ROWS && g[end + 1][c] && g[end + 1][c].type === t.type) end++;
+      const len = end - r + 1;
+      if (len >= 3){ const cl = []; for (let k = r; k <= end; k++) cl.push([k, c]); addRun(cl, t.type, len); }
+      r = end + 1;
+    }
+  }
+  return { runs, cells: cellArr };
+}
+
+function hasValidMove(g){
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    for (const [dr, dc] of [[0, 1], [1, 0]]){
+      const r2 = r + dr, c2 = c + dc;
+      if (r2 >= ROWS || c2 >= COLS) continue;
+      const t = g[r][c]; g[r][c] = g[r2][c2]; g[r2][c2] = t;
+      const ok = findMatches(g).runs.length > 0;
+      g[r2][c2] = g[r][c]; g[r][c] = t;
+      if (ok) return true;
+    }
+  }
+  return false;
+}
+
+function collapseGrid(g){
+  const moves = [];
+  for (let c = 0; c < COLS; c++){
+    let write = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--){
+      const t = g[r][c];
+      if (t){ if (write !== r){ moves.push({ t, toR: write }); g[write][c] = t; g[r][c] = null; } write--; }
+    }
+    let k = 0;
+    for (let r = write; r >= 0; r--){
+      const t = makeTile(r, c);
+      t.row = -(k + 1); t.col = c;
+      g[r][c] = t;
+      moves.push({ t, toR: r });
+      k++;
+    }
+  }
+  return moves;
+}
+
+// 补间动画
+const tweens = [];
+function animTo(obj, prop, to, dur, ease){
+  return new Promise(res => {
+    const from = obj[prop];
+    if (from === to){ res(); return; }
+    tweens.push({ obj, prop, from, to, dur, ease: ease || easeOut, t0: performance.now(), done: res });
+  });
+}
+function updateTweens(now){
+  for (let i = tweens.length - 1; i >= 0; i--){
+    const tw = tweens[i];
+    const p = clamp((now - tw.t0) / tw.dur, 0, 1);
+    tw.obj[tw.prop] = tw.from + (tw.to - tw.from) * (tw.ease ? tw.ease(p) : p);
+    if (p >= 1){ tweens.splice(i, 1); tw.done(); }
+  }
+}
+
+class Board {
+  constructor(side){ this.side = side; this.grid = []; this.fxTiles = []; this.sel = null; this.hover = null; this.regenerate(); }
+  regenerate(){ this.grid = makeGrid(); this.fxTiles = []; this.sel = null; this.hover = null; }
+}
+
+function getFit(cv){
+  const rect = cv.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
+  if (cv._w === w && cv._h === h) return cv._fit;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = w * dpr; cv.height = h * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cv._w = w; cv._h = h; cv._fit = { ctx, w, h };
+  return cv._fit;
+}
+
+function renderBoard(cv, board, now){
+  if (!board) return;
+  const { ctx, w, h } = getFit(cv);
+  const cell = Math.floor(Math.min(w, h) / ROWS);
+  const ox = Math.floor((w - cell * COLS) / 2), oy = Math.floor((h - cell * ROWS) / 2);
+  ctx.fillStyle = 'rgba(12,16,25,.92)'; ctx.fillRect(0, 0, w, h);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    const x = ox + c * cell, y = oy + r * cell;
+    ctx.fillStyle = (r + c) % 2 ? 'rgba(255,255,255,.02)' : 'rgba(255,255,255,.045)';
+    ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+  }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    const t = board.grid[r][c];
+    if (!t || t.row < -0.4) continue;
+    drawTile(ctx, ox + (t.col + .5) * cell, oy + (t.row + .5) * cell, cell * .42 * t.scale, t.type);
+  }
+  for (const f of board.fxTiles){
+    const p = (now - f.t0) / POP_MS;
+    if (p >= 1) continue;
+    ctx.globalAlpha = 1 - p;
+    drawTile(ctx, ox + (f.col + .5) * cell, oy + (f.row + .5) * cell, cell * .42 * (1 + .45 * p), f.type);
+    ctx.globalAlpha = 1;
+  }
+  if (board.fxTiles.length && now - board.fxTiles[0].t0 > POP_MS + 400) board.fxTiles = board.fxTiles.filter(f => now - f.t0 < POP_MS + 300);
+  const ring = board.hover || board.sel;
+  if (ring){
+    const x = ox + ring.c * cell, y = oy + ring.r * cell;
+    ctx.strokeStyle = board.sel ? 'rgba(240,207,127,.95)' : 'rgba(240,207,127,.4)';
+    ctx.lineWidth = board.sel ? 3 : 1.5;
+    drawRoundRect(ctx, x + 2, y + 2, cell - 4, cell - 4, cell * .18);
+    ctx.stroke();
+  }
+}
+
+function waveFx(runs){
+  const fx = { rage: 0, mana: 0, green: 0, heal: 0, shield: 0, ult: 0, dmg: 0, extra: false };
+  for (const run of runs){
+    const eff = GEM_EFFECT[run.type];
+    if (!eff) continue;
+    fx.rage += eff.rage || 0; fx.mana += eff.mana || 0; fx.green += eff.green || 0;
+    fx.heal += eff.heal || 0; fx.shield += eff.shield || 0; fx.ult += eff.ult || 0;
+    if (eff.extra) fx.extra = true;
+    if (run.type === 'skull') fx.dmg += 5 + 2 * (run.len - 3);
+  }
+  return fx;
+}
+// ===== 战斗核心 =====
+const pCardEl = $('#pCard'), eCardEl = $('#eCard');
+let player = null, enemy = null, stage = 0;
+let board = null;
+let busy = false, ended = false, playerCanAct = false;
+let enemyExtra = false;
+let lastResultWin = false;
+const gameStats = { turns: 1, maxCombo: 0, cleared: 0 };
+let ACTIVE_COMBO_BONUS = 0;
+const BUFF_NAMES = { atkUp: '攻击提升', atkDown: '攻击降低', armorDown: '护甲降低' };
+const RES_CN = { mana: '蓝', rage: '红', green: '绿', ult: '紫' };
+
+function makeUnit(def, side){
+  return {
+    def, side, name: def.name, title: def.title || '', sigil: def.sigil, color: def.color,
+    maxHp: def.hp, hp: def.hp, atk: def.atk, armor: def.armor, crit: def.crit || 0,
+    mana: 0, rage: 0, green: 0, ult: 0, shield: 0, buff: {}, comboBonus: 0,
+    skills: (def.skills || []).map(s => ({ ...s, cdLeft: s.cd || 0, cdMax: s.cd || 0 })),
+  };
+}
+
+function unitAtk(u){
+  let a = u.atk;
+  if (u.buff.atkUp) a *= 1 + u.buff.atkUp.val;
+  if (u.buff.atkDown) a *= 1 - u.buff.atkDown.val;
+  if (u.def && u.def.id === 'zhangfei'){ const lost = 1 - u.hp / u.maxHp; a *= 1 + Math.floor(lost / .15) * .08; }
+  return Math.round(a);
+}
+function unitArmor(u){
+  let a = u.armor;
+  if (u.buff.armorDown) a = Math.round(a * (1 - u.buff.armorDown.val));
+  return Math.max(0, a);
+}
+function setBuff(u, key, val, turns){ u.buff[key] = { val, turns }; }
+function tickBuffs(u){
+  for (const k of Object.keys(u.buff)){
+    if (k === 'stun') continue;
+    u.buff[k].turns--;
+    if (u.buff[k].turns <= 0) delete u.buff[k];
+  }
+}
+function hitDamage(src, tgt, base, opts){
+  opts = opts || {};
+  let dmg = Math.max(1, Math.round(base));
+  if (tgt.shield > 0){ const a = Math.min(tgt.shield, dmg); tgt.shield -= a; dmg -= a; }
+  if (!opts.ignoreArmor) dmg = Math.max(1, dmg - unitArmor(tgt));
+  let crit = false;
+  if (opts.forceCrit || (!opts.noCrit && Math.random() * 100 < (src.crit || 0) + (opts.critBonus || 0))){
+    dmg = Math.round(dmg * 1.5); crit = true;
+  }
+  tgt.hp = Math.max(0, tgt.hp - dmg);
+  return { dmg, crit };
+}
+function physHit(src, tgt, pct, opts){
+  opts = opts || {};
+  const bonus = opts.pctBonus != null ? opts.pctBonus : ACTIVE_COMBO_BONUS;
+  const base = Math.round(unitAtk(src) * pct * (1 + bonus) + (opts.flat || 0));
+  return [hitDamage(src, tgt, base, opts)];
+}
+function multiHit(src, tgt, n, pct){
+  const out = [];
+  const bonus = ACTIVE_COMBO_BONUS;
+  for (let i = 0; i < n; i++) out.push(hitDamage(src, tgt, unitAtk(src) * pct * (1 + bonus), {}));
+  return out;
+}
+
+function addFloater(side, o){
+  const card = side === 'player' ? pCardEl : eCardEl;
+  if (!card) return;
+  const rect = card.getBoundingClientRect();
+  const el = document.createElement('div');
+  let cls = 'floater';
+  if (o.dmg != null) cls += ' dmg';
+  else if (o.heal != null) cls += ' heal';
+  else if (o.shield != null) cls += ' shield';
+  else cls += ' toast';
+  if (o.crit) cls += ' crit';
+  el.className = cls;
+  const text = o.dmg != null ? '-' + o.dmg : o.heal != null ? '+' + o.heal : o.shield != null ? '护盾 +' + o.shield : (o.text || '');
+  el.textContent = text;
+  el.style.left = (rect.left + rect.width / 2 + rand(-70, 70)) + 'px';
+  el.style.top = (rect.top + 8) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+const showToast = (side, text) => addFloater(side, { text });
+
+async function castSkill(unit, skill, opp){
+  Sfx.skill();
+  ACTIVE_COMBO_BONUS = unit.comboBonus || 0;
+  const evs = skill.cast(unit, opp);
+  for (const ev of evs){
+    if (ev.dmg != null){ addFloater(opp.side, { dmg: ev.dmg, crit: ev.crit }); Sfx.damage(); }
+    else if (ev.heal != null){ addFloater(unit.side, { heal: ev.heal }); Sfx.heal(); }
+    else if (ev.shield != null){ addFloater(unit.side, { shield: ev.shield }); }
+    else if (ev.stun != null){ opp.buff.stun = ev.turns; showToast(opp.side, '被眩晕'); Sfx.stun(); }
+    else if (ev.buff){ setBuff(opp, ev.key, ev.val, ev.turns); showToast(opp.side, BUFF_NAMES[ev.key] || ev.key); }
+    updateUI();
+    await wait(150);
+  }
+  ACTIVE_COMBO_BONUS = 0;
+}
+
+function applyPlayerWave(fx, runs, combo){
+  player.rage = clamp(player.rage + fx.rage, 0, RES_MAX);
+  player.mana = clamp(player.mana + fx.mana, 0, RES_MAX);
+  player.green = clamp(player.green + fx.green, 0, RES_MAX);
+  player.ult = clamp(player.ult + fx.ult, 0, RES_MAX);
+  player.shield += fx.shield;
+  if (player.def.id === 'daji'){
+    const n = runs.filter(r => r.type === 'blue').reduce((s, r) => s + r.len, 0);
+    player.mana = clamp(player.mana + n, 0, RES_MAX);
+  }
+  if (fx.heal > 0){
+    const v = Math.min(player.maxHp - player.hp, Math.round(fx.heal));
+    if (v > 0){ player.hp += v; addFloater('player', { heal: v }); }
+  }
+  if (fx.dmg > 0){
+    const dmg = Math.round(fx.dmg * (1 + .2 * (combo - 1)));
+    const r = hitDamage(player, enemy, dmg, { noCrit: true });
+    addFloater('enemy', { dmg: r.dmg });
+    Sfx.damage();
+  }
+}
+function applyEnemyWave(fx, runs, combo){
+  const nGems = runs.reduce((s, r) => (r.type === 'skull' || r.type === 'star') ? s : s + r.len, 0);
+  if (nGems > 0 && enemy.hp < enemy.maxHp){
+    const v = Math.min(enemy.maxHp - enemy.hp, nGems);
+    if (v > 0){ enemy.hp += v; addFloater('enemy', { heal: v }); }
+  }
+  if (fx.dmg > 0){
+    const dmg = Math.round(fx.dmg * (1 + .2 * (combo - 1)));
+    const r = hitDamage(enemy, player, dmg, { noCrit: true });
+    addFloater('player', { dmg: r.dmg });
+    Sfx.damage();
+  }
+}
+
+async function resolveMove(board, onWave){
+  let combo = 0;
+  while (!ended){
+    const { runs, cells } = findMatches(board.grid);
+    if (!runs.length) break;
+    combo++;
+    for (const { r, c } of cells){
+      board.fxTiles.push({ row: r, col: c, type: board.grid[r][c].type, t0: performance.now() });
+      board.grid[r][c] = null;
+    }
+    Sfx.match();
+    await wait(POP_MS);
+    onWave(waveFx(runs), runs, combo, cells.length);
+    updateUI(); checkEnd();
+    if (ended) break;
+    const moves = collapseGrid(board.grid);
+    if (moves.length) await Promise.all(moves.map(m => animTo(m.t, 'row', m.toR, FALL_MS)));
+    await wait(24);
+  }
+  return combo;
+}
+
+function showCombo(combo){ const el = $('#tbCombo'); el.textContent = '连击 x' + combo; el.classList.remove('hidden'); }
+function hideCombo(){ $('#tbCombo').classList.add('hidden'); }
+
+function startBattle(heroDef){
+  stage = 0; lastResultWin = false;
+  initStage(heroDef, 0);
+}
+function initStage(heroDef, stageIdx){
+  stage = stageIdx;
+  player = makeUnit(heroDef, 'player');
+  enemy = makeUnit(BOSSES[stageIdx], 'enemy');
+  board = new Board();
+  gameStats.turns = 1; gameStats.maxCombo = 0; gameStats.cleared = 0;
+  ended = false; busy = false;
+  buildPlayerCard(); buildEnemyCard();
+  showStageBanner();
+  updateUI();
+  startPlayerTurn();
+}
+
+function startPlayerTurn(){
+  if (ended) return;
+  tickBuffs(player);
+  player.comboBonus = 0;
+  playerCanAct = true;
+  $('#tbTurn').textContent = '你的回合';
+  $('#tbInfo').textContent = '第 ' + gameStats.turns + ' 回合';
+  hideCombo();
+  Sfx.turn();
+  updateUI();
+}
+
+async function playerMove(r1, c1, r2, c2){
+  if (!playerCanAct || busy || ended) return;
+  busy = true; playerCanAct = false;
+  const bd = board;
+  const a = bd.grid[r1][c1], b = bd.grid[r2][c2];
+  if (!a || !b){ busy = false; playerCanAct = true; return; }
+  bd.grid[r1][c1] = b; bd.grid[r2][c2] = a;
+  await Promise.all([
+    animTo(a, 'row', r2, FALL_MS), animTo(a, 'col', c2, FALL_MS),
+    animTo(b, 'row', r1, FALL_MS), animTo(b, 'col', c1, FALL_MS),
+  ]);
+  Sfx.swap();
+  if (findMatches(bd.grid).runs.length === 0){
+    bd.grid[r1][c1] = a; bd.grid[r2][c2] = b;
+    await Promise.all([
+      animTo(a, 'row', r1, FALL_MS), animTo(a, 'col', c1, FALL_MS),
+      animTo(b, 'row', r2, FALL_MS), animTo(b, 'col', c2, FALL_MS),
+    ]);
+    Sfx.invalid();
+    busy = false; playerCanAct = true;
+    updateUI();
+    return;
+  }
+  let extra = false;
+  const onWave = (fx, runs, combo, n) => {
+    if (fx.extra) extra = true;
+    if (combo > 1) player.comboBonus = Math.max(player.comboBonus, (combo - 1) * .04);
+    gameStats.cleared += n;
+    if (combo > gameStats.maxCombo) gameStats.maxCombo = combo;
+    if (combo > 1){ showCombo(combo); Sfx.cascade(); }
+    applyPlayerWave(fx, runs, combo);
+  };
+  await resolveMove(bd, onWave);
+  player.comboBonus = 0;
+  hideCombo();
+  if (ended){ busy = false; updateUI(); return; }
+  applyEndTurnPassive();
+  updateUI();
+  if (extra){ showToast('player', '额外回合！'); busy = false; playerCanAct = true; updateUI(); return; }
+  busy = false;
+  await enemyTurn();
+}
+
+function applyEndTurnPassive(){
+  if (ended) return;
+  let v = 0;
+  if (player.def.id === 'arthur') v = Math.round(player.maxHp * .02);
+  else if (player.def.id === 'caiwenji') v = Math.round(player.maxHp * .03);
+  if (v > 0 && player.hp < player.maxHp){ player.hp = Math.min(player.maxHp, player.hp + v); addFloater('player', { heal: v }); }
+}
+
+async function enemyTurn(){
+  if (ended) return;
+  $('#tbTurn').textContent = '敌方回合';
+  updateUI();
+  await wait(430);
+  if (ended) return;
+  if (enemy.buff.stun){
+    showToast('enemy', '被眩晕，无法行动');
+    delete enemy.buff.stun;
+    Sfx.stun();
+    await endEnemyTurn();
+    return;
+  }
+  tickBuffs(enemy);
+  enemyExtra = false;
+  let extra = 0;
+  while (!ended){
+    const mv = aiChooseMove(board.grid);
+    if (mv){
+      await enemySwapResolve(mv);
+    } else {
+      board.regenerate();
+      showToast('enemy', '棋局洗牌');
+      await wait(260);
+    }
+    if (ended) return;
+    if (!enemyExtra || extra >= 2) break;
+    enemyExtra = false; extra++;
+    await wait(140);
+  }
+  if (ended) return;
+  const r = hitDamage(enemy, player, unitAtk(enemy), {});
+  addFloater('player', { dmg: r.dmg, crit: r.crit });
+  Sfx.damage();
+  updateUI(); checkEnd();
+  if (ended) return;
+  for (const sk of enemy.skills){
+    if (sk.cdLeft > 0){ sk.cdLeft--; continue; }
+    await castSkill(enemy, sk, player);
+    sk.cdLeft = sk.cdMax;
+    updateUI(); checkEnd();
+    break;
+  }
+  if (ended) return;
+  await endEnemyTurn();
+}
+
+async function enemySwapResolve(mv){
+  const a = board.grid[mv.r][mv.c], b = board.grid[mv.r2][mv.c2];
+  board.grid[mv.r][mv.c] = b; board.grid[mv.r2][mv.c2] = a;
+  await Promise.all([
+    animTo(a, 'row', mv.r2, FALL_MS), animTo(a, 'col', mv.c2, FALL_MS),
+    animTo(b, 'row', mv.r, FALL_MS), animTo(b, 'col', mv.c, FALL_MS),
+  ]);
+  Sfx.swap();
+  await resolveMove(board, (fx, runs, combo, n) => {
+    if (fx.extra) enemyExtra = true;
+    gameStats.cleared += n;
+    if (combo > gameStats.maxCombo) gameStats.maxCombo = combo;
+    if (combo > 1){ showCombo(combo); Sfx.cascade(); }
+    applyEnemyWave(fx, runs, combo);
+  });
+  hideCombo();
+}
+
+async function endEnemyTurn(){
+  gameStats.turns++;
+  updateUI();
+  if (ended) return;
+  startPlayerTurn();
+}
+
+// ===== 敌方 AI =====
+function aiChooseMove(grid){
+  const scored = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    for (const [dr, dc] of [[0, 1], [1, 0]]){
+      const r2 = r + dr, c2 = c + dc;
+      if (r2 >= ROWS || c2 >= COLS) continue;
+      const s = scoreMove(grid, r, c, r2, c2);
+      if (s > 0) scored.push({ r, c, r2, c2, s });
+    }
+  }
+  if (!scored.length) return null;
+  scored.sort((a, b) => b.s - a.s);
+  const top = scored.slice(0, Math.min(4, scored.length));
+  const roll = Math.random();
+  if (roll < .6) return top[0];
+  if (roll < .9) return top[Math.min(1, top.length - 1)];
+  return pick(top);
+}
+function scoreMove(grid, r1, c1, r2, c2){
+  const g = cloneGrid(grid);
+  const t = g[r1][c1]; g[r1][c1] = g[r2][c2]; g[r2][c2] = t;
+  const { runs } = findMatches(g);
+  if (!runs.length) return 0;
+  let s = 0;
+  for (const run of runs){
+    const n = run.len;
+    if (run.type === 'skull') s += (5 + 2 * (n - 3)) * 1.8;
+    else if (run.type === 'star') s += 12 + 3 * n;
+    else s += n;
+  }
+  return s;
+}
+
+// ===== 结算 / 阶段 =====
+function checkEnd(){
+  if (ended) return;
+  if (enemy.hp <= 0){ ended = true; onStageWin(); }
+  else if (player.hp <= 0){ ended = true; onLose(); }
+}
+async function onStageWin(){
+  Sfx.win();
+  if (stage >= BOSSES.length - 1){ lastResultWin = true; showResult(true); return; }
+  stage++;
+  player.hp = Math.min(player.maxHp, player.hp + Math.round(player.maxHp * .3));
+  player.buff = {}; player.shield = 0;
+  enemy = makeUnit(BOSSES[stage], 'enemy');
+    board.regenerate();
+  buildEnemyCard();
+  showStageBanner();
+  updateUI();
+  await wait(800);
+  ended = false; busy = false;
+  startPlayerTurn();
+}
+function onLose(){ lastResultWin = false; Sfx.lose(); showResult(false); }
+
+function showStageBanner(){
+  const el = document.createElement('div');
+  el.className = 'stage-banner';
+  el.innerHTML = '<div class="sb-tag">' + enemy.title + '</div><div class="sb-name">' + enemy.name +
+    '</div><div class="sb-desc">生命 ' + enemy.maxHp + ' · 攻击 ' + enemy.atk + ' · 护甲 ' + enemy.armor + '</div>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1900);
+}
+// ===== 视图与界面 =====
+let currentView = 'menu';
+let selectedHero = null;
+let kbFirst = null;
+
+function showView(name){
+  currentView = name;
+  $('#view-menu').classList.toggle('hidden', name !== 'menu');
+  $('#view-select').classList.toggle('hidden', name !== 'select');
+  $('#view-battle').classList.toggle('hidden', name !== 'battle');
+  $('#resultOverlay').classList.add('hidden');
+  if (name === 'battle'){ requestAnimationFrame(() => { getFit($('#board')); }); }
+}
+const inBattle = () => currentView === 'battle' && !!board;
+
+function setBar(id, val, max){
+  const el = $(id);
+  if (el) el.style.width = clamp(Math.round(val / max * 100), 0, 100) + '%';
+}
+function renderBadges(containerId, u){
+  const box = $(containerId);
+  if (!box) return;
+  box.innerHTML = '';
+  if (u.shield > 0) box.appendChild(badgeEl('护盾 ' + u.shield, 'gold'));
+  for (const k of Object.keys(u.buff)){
+    if (k === 'stun') box.appendChild(badgeEl('眩晕 ' + u.buff[k].turns, 'gold'));
+    else box.appendChild(badgeEl(BUFF_NAMES[k], ''));
+  }
+  if (!box.children.length) box.appendChild(badgeEl(u.name + ' 状态正常', ''));
+}
+function badgeEl(text, cls){
+  const el = document.createElement('span');
+  el.className = 'badge' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  return el;
+}
+
+function buildPlayerCard(){
+  const h = player.def;
+  pCardEl.innerHTML =
+    '<div class="uc-head">' +
+      '<canvas class="uc-avatar" width="62" height="62"></canvas>' +
+      '<div class="uc-id"><div class="uc-name">' + h.name + '</div><div class="uc-title">' + h.title + ' · ' + h.role + '</div></div>' +
+    '</div>' +
+    '<div class="bar-row"><span class="lbl">生命</span><div class="bar bar-hp"><i id="pHpBar"></i></div><span class="val" id="pHpText"></span></div>' +
+    '<div class="bar-row"><span class="lbl">法力</span><div class="bar bar-mana"><i id="pManaBar"></i></div><span class="val" id="pManaText"></span></div>' +
+    '<div class="bar-row"><span class="lbl">战意</span><div class="bar bar-rage"><i id="pRageBar"></i></div><span class="val" id="pRageText"></span></div>' +
+    '<div class="bar-row"><span class="lbl">自然</span><div class="bar bar-green"><i id="pGreenBar"></i></div><span class="val" id="pGreenText"></span></div>' +
+    '<div class="bar-row"><span class="lbl">终极</span><div class="bar bar-ult"><i id="pUltBar"></i></div><span class="val" id="pUltText"></span></div>' +
+    '<div class="unit-badges" id="pBadges"></div>' +
+    '<div class="skills">' +
+      '<div class="skill" title="被动：' + h.passive.desc + '"><span class="sk-ico"><canvas width="34" height="34"></canvas></span>' +
+        '<span class="sk-txt"><b>被动 · ' + h.passive.name + '</b><span>' + h.passive.desc + '</span></span></div>' +
+      h.skills.map((s, i) =>
+        '<button class="skill" data-i="' + i + '" aria-label="' + s.name + '">' +
+          '<span class="sk-ico"><canvas width="34" height="34"></canvas></span>' +
+          '<span class="sk-txt"><b>' + s.name + '</b><span>' + s.desc + '</span></span>' +
+          '<span class="sk-cost">' + RES_CN[s.type] + ' ' + s.cost + '</span>' +
+        '</button>').join('') +
+    '</div>';
+  drawEmblem(pCardEl.querySelector('.uc-avatar'), h);
+  const icos = pCardEl.querySelectorAll('.skill .sk-ico canvas');
+  drawSkillIcon(icos[0], h.passive.icon, '#c9cedb');
+  h.skills.forEach((s, i) => drawSkillIcon(icos[i + 1], s.icon, h.color));
+  pCardEl.querySelectorAll('.skill[data-i]').forEach(btn =>
+    btn.addEventListener('click', () => tryCastPlayerSkill(+btn.dataset.i)));
+}
+
+function buildEnemyCard(){
+  const e = enemy;
+  eCardEl.innerHTML =
+    '<div class="uc-head">' +
+      '<canvas class="uc-avatar" width="62" height="62"></canvas>' +
+      '<div class="uc-id"><div class="uc-name">' + e.name + '</div><div class="uc-title">' + e.title + '</div></div>' +
+    '</div>' +
+    '<div class="bar-row"><span class="lbl">生命</span><div class="bar bar-hp"><i id="eHpBar"></i></div><span class="val" id="eHpText"></span></div>' +
+    '<div class="bar-row"><span class="lbl">攻击</span><span class="val" style="text-align:left;">' + e.atk + ' · 护甲 ' + e.armor + '</span></div>' +
+    '<div class="unit-badges" id="eBadges"></div>' +
+    '<div class="skills">' +
+      e.skills.map((s, i) =>
+        '<div class="skill" data-i="' + i + '">' +
+          '<span class="sk-ico"><canvas width="34" height="34"></canvas></span>' +
+          '<span class="sk-txt"><b>' + s.name + '</b><span>' + s.desc + '</span></span>' +
+          '<span class="sk-cd"></span>' +
+        '</div>').join('') +
+    '</div>' +
+    '<div class="e-stage">阶段 <b>' + (stage + 1) + ' / ' + BOSSES.length + '</b></div>';
+  drawEmblem(eCardEl.querySelector('.uc-avatar'), e);
+  eCardEl.querySelectorAll('.skill .sk-ico canvas').forEach((cv, i) => drawSkillIcon(cv, e.skills[i].icon, e.color));
+}
+
+function updateUI(){
+  if (!player) return;
+  setBar('pHpBar', player.hp, player.maxHp);
+  $('#pHpText').textContent = Math.max(0, Math.round(player.hp)) + '/' + player.maxHp;
+  setBar('pManaBar', player.mana, RES_MAX); $('#pManaText').textContent = Math.round(player.mana) + '/' + RES_MAX;
+  setBar('pRageBar', player.rage, RES_MAX); $('#pRageText').textContent = Math.round(player.rage) + '/' + RES_MAX;
+  setBar('pGreenBar', player.green, RES_MAX); $('#pGreenText').textContent = Math.round(player.green) + '/' + RES_MAX;
+  setBar('pUltBar', player.ult, RES_MAX); $('#pUltText').textContent = Math.round(player.ult) + '/' + RES_MAX;
+  renderBadges('pBadges', player);
+  pCardEl.querySelectorAll('.skill[data-i]').forEach(btn => {
+    const i = +btn.dataset.i, sk = player.def.skills[i];
+    const off = busy || !playerCanAct || player[sk.type] < sk.cost;
+    btn.classList.toggle('off', off);
+    btn.classList.toggle('ready', !off && player[sk.type] >= sk.cost);
+  });
+  if (enemy){
+    setBar('eHpBar', enemy.hp, enemy.maxHp);
+    $('#eHpText').textContent = Math.max(0, Math.round(enemy.hp)) + '/' + enemy.maxHp;
+    renderBadges('eBadges', enemy);
+    eCardEl.querySelectorAll('.skill[data-i]').forEach(btn => {
+      const i = +btn.dataset.i, sk = enemy.skills[i];
+      const cd = btn.querySelector('.sk-cd');
+      cd.textContent = sk.cdLeft > 0 ? 'CD ' + sk.cdLeft : '';
+      btn.classList.toggle('off', sk.cdLeft > 0);
+    });
+  }
+}
+
+function tryCastPlayerSkill(i){
+  if (busy || !playerCanAct || ended) return;
+  const sk = player.def.skills[i];
+  if (player[sk.type] < sk.cost){ showToast('player', '能量不足'); Sfx.invalid(); return; }
+  player[sk.type] -= sk.cost;
+  busy = true; playerCanAct = false;
+  updateUI();
+  castSkill(player, sk, enemy).then(() => {
+    updateUI(); checkEnd();
+    busy = false;
+    if (ended) return;
+    enemyTurn();
+  });
+}
+
+// ===== 输入：拖拽 / 点击 / 键盘 =====
+function cellFromEvent(cv, ev){
+  const rect = cv.getBoundingClientRect();
+  const cell = Math.floor(Math.min(rect.width, rect.height) / ROWS);
+  const ox = (rect.width - cell * COLS) / 2, oy = (rect.height - cell * ROWS) / 2;
+  const c = Math.floor((ev.clientX - rect.left - ox) / cell);
+  const r = Math.floor((ev.clientY - rect.top - oy) / cell);
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+  return { r, c };
+}
+
+let dragStart = null, dragFrom = null;
+const boardCv = $('#board');
+boardCv.addEventListener('pointerdown', ev => {
+  Sfx.init();
+  if (!inBattle() || !playerCanAct || busy || ended) return;
+  const cell = cellFromEvent(boardCv, ev);
+  if (!cell) return;
+  dragStart = cell; dragFrom = cell;
+  board.sel = cell;
+});
+boardCv.addEventListener('pointermove', ev => {
+  if (!dragStart) return;
+  const cell = cellFromEvent(boardCv, ev);
+  if (!cell) return;
+  const dr = Math.abs(cell.r - dragFrom.r), dc = Math.abs(cell.c - dragFrom.c);
+  if (dr + dc === 1) board.hover = cell;
+});
+boardCv.addEventListener('pointerup', ev => {
+  if (!dragStart){ board.hover = null; return; }
+  const cell = cellFromEvent(boardCv, ev);
+  board.hover = null;
+  if (!cell){ dragStart = null; dragFrom = null; return; }
+  if (cell.r === dragStart.r && cell.c === dragStart.c){
+    if (board.sel && board.sel.r === cell.r && board.sel.c === cell.c) board.sel = null;
+    else board.sel = cell;
+  } else {
+    const dr = Math.abs(cell.r - dragStart.r), dc = Math.abs(cell.c - dragStart.c);
+    if (dr + dc === 1){ board.sel = null; playerMove(dragStart.r, dragStart.c, cell.r, cell.c); }
+    else board.sel = cell;
+  }
+  dragStart = null; dragFrom = null;
+});
+
+document.addEventListener('keydown', ev => {
+  if (!inBattle() || ended) return;
+  const bd = board;
+  const dirs = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  const d = dirs[ev.key];
+  if (d){
+    ev.preventDefault();
+    if (!bd.sel) bd.sel = { r: 4, c: 4 };
+    else bd.sel = { r: clamp(bd.sel.r + d[0], 0, ROWS - 1), c: clamp(bd.sel.c + d[1], 0, COLS - 1) };
+    return;
+  }
+  if (ev.key === 'Enter' || ev.key === ' '){
+    ev.preventDefault();
+    if (!bd.sel){ bd.sel = { r: 4, c: 4 }; return; }
+    if (!kbFirst){ kbFirst = { r: bd.sel.r, c: bd.sel.c }; return; }
+    const a = kbFirst, b = { r: bd.sel.r, c: bd.sel.c };
+    kbFirst = null;
+    if (Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1){ bd.sel = null; playerMove(a.r, a.c, b.r, b.c); }
+    else bd.sel = b;
+  }
+});
+
+// ===== 菜单 / 选人 =====
+function renderMenu(){
+  const wrap = $('#menuHeroes'); wrap.innerHTML = '';
+  HEROES.forEach(h => {
+    const d = document.createElement('div'); d.className = 'mh';
+    const cv = document.createElement('canvas'); cv.width = 46; cv.height = 46;
+    drawEmblem(cv, h);
+    const b = document.createElement('b'); b.textContent = h.name;
+    const s = document.createElement('span'); s.textContent = h.role;
+    d.appendChild(cv); d.appendChild(b); d.appendChild(s);
+    wrap.appendChild(d);
+  });
+  const leg = $('#menuLegend'); leg.innerHTML = '<h3>宝石图例</h3>';
+  LEGEND.forEach(it => {
+    const d = document.createElement('div'); d.className = 'leg-item';
+    const cv = document.createElement('canvas'); cv.width = 30; cv.height = 30;
+    drawMiniGem(cv, it.type);
+    const p = document.createElement('span');
+    p.textContent = TILE_TYPES[it.type].name + '：' + it.desc;
+    d.appendChild(cv); d.appendChild(p); leg.appendChild(d);
+  });
+}
+
+function renderSelect(){
+  const grid = $('#heroGrid'); grid.innerHTML = '';
+  HEROES.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'hero-card' + (selectedHero === h.id ? ' sel' : '');
+    card.tabIndex = 0;
+    card.innerHTML =
+      '<div class="hc-top">' +
+        '<canvas class="hc-avatar" width="76" height="76"></canvas>' +
+        '<div class="hc-id"><div class="hc-name">' + h.name + '</div><div class="hc-title">' + h.title + '</div>' +
+        '<span class="hc-role">' + h.role + '</span></div>' +
+      '</div>' +
+      '<div class="hc-stats">' +
+        '<span class="st">生命 <b>' + h.hp + '</b></span><span class="st">攻击 <b>' + h.atk + '</b></span>' +
+        '<span class="st">护甲 <b>' + h.armor + '</b></span><span class="st">暴击 <b>' + h.crit + '%</b></span>' +
+      '</div>' +
+      '<div class="hc-skills">' +
+        '<div class="sk"><b>被动 · ' + h.passive.name + '</b><i>' + h.passive.desc + '</i></div>' +
+        h.skills.map(s => '<div class="sk"><b>' + RES_CN[s.type] + ' ' + s.cost + ' · ' + s.name + '</b><i>' + s.desc + '</i></div>').join('') +
+      '</div>';
+    card.addEventListener('click', () => { selectedHero = h.id; renderSelect(); $('#btnEnterBattle').disabled = false; Sfx.init(); Sfx.swap(); });
+    card.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); card.click(); } });
+    const cv = card.querySelector('canvas');
+    drawEmblem(cv, h);
+    grid.appendChild(card);
+  });
+}
+
+// ===== 结算 =====
+function showResult(win){
+  $('#resultCard').className = 'overlay-card ' + (win ? 'win' : 'lose');
+  $('#resultTitle').textContent = win ? '通关胜利' : '战斗失败';
+  $('#resultSub').textContent = win ? '你击败了风暴龙王，王者峡谷为你加冕！' : (enemy ? enemy.name + ' 击败了你，重整旗鼓再来一战。' : '');
+  $('#resultStats').innerHTML =
+    '<div class="ov-stat"><b>' + gameStats.turns + '</b><span>总回合</span></div>' +
+    '<div class="ov-stat"><b>' + gameStats.maxCombo + '</b><span>最高连击</span></div>' +
+    '<div class="ov-stat"><b>' + gameStats.cleared + '</b><span>消除宝石</span></div>';
+  $('#btnResultRetry').textContent = win ? '再来一局' : '重试本关';
+  $('#resultOverlay').classList.remove('hidden');
+}
+
+// ===== 主入口与事件绑定 =====
+function init(){
+  renderMenu();
+  $('#btnStart').addEventListener('click', () => { Sfx.init(); Sfx.swap(); renderSelect(); showView('select'); });
+  $('#btnBackMenu').addEventListener('click', () => showView('menu'));
+  $('#btnEnterBattle').addEventListener('click', () => {
+    if (!selectedHero) return;
+    Sfx.init(); Sfx.turn();
+    const hero = HEROES.find(h => h.id === selectedHero);
+    startBattle(hero);
+    showView('battle');
+  });
+  $('#btnHelpMenu').addEventListener('click', () => { Sfx.init(); $('#helpModal').classList.remove('hidden'); });
+  $('#btnHelpBattle').addEventListener('click', () => { Sfx.init(); $('#helpModal').classList.remove('hidden'); });
+  $('#btnHelpClose').addEventListener('click', () => $('#helpModal').classList.add('hidden'));
+  $('#helpModal').addEventListener('click', ev => { if (ev.target === $('#helpModal')) $('#helpModal').classList.add('hidden'); });
+
+  const modalLeg = $('#modalLegend'); modalLeg.innerHTML = '';
+  LEGEND.forEach(it => {
+    const d = document.createElement('div'); d.className = 'leg-item';
+    const cv = document.createElement('canvas'); cv.width = 30; cv.height = 30;
+    drawMiniGem(cv, it.type);
+    const p = document.createElement('span');
+    p.textContent = TILE_TYPES[it.type].name + '：' + it.desc;
+    d.appendChild(cv); d.appendChild(p); modalLeg.appendChild(d);
+  });
+
+  const muteBtn = $('#muteBtn');
+  muteBtn.addEventListener('click', () => {
+    Sfx.init();
+    Sfx.muted = !Sfx.muted;
+    muteBtn.classList.toggle('muted', Sfx.muted);
+    muteBtn.setAttribute('aria-checked', String(!Sfx.muted));
+  });
+
+  $('#btnResultSelect').addEventListener('click', () => {
+    $('#resultOverlay').classList.add('hidden');
+    renderSelect(); showView('select');
+  });
+  $('#btnResultRetry').addEventListener('click', () => {
+    $('#resultOverlay').classList.add('hidden');
+    const hero = HEROES.find(h => h.id === selectedHero);
+    if (!hero) return;
+    initStage(hero, lastResultWin ? 0 : stage);
+    showView('battle');
+  });
+
+  window.addEventListener('resize', () => { if (board){ getFit($('#board')); } });
+
+  // 测试钩子（供自检驱动）
+  window.__g = {
+    get state(){
+      return {
+        view: currentView, busy, ended, stage, turns: gameStats.turns, canAct: playerCanAct,
+        playerHp: player ? player.hp : null, playerMaxHp: player ? player.maxHp : null,
+        enemyHp: enemy ? enemy.hp : null, enemyName: enemy ? enemy.name : null,
+        playerMana: player ? player.mana : null, playerRage: player ? player.rage : null, selectedHero,
+      };
+    },
+    enterBattle(){ if (!selectedHero) selectedHero = HEROES[0].id; startBattle(HEROES.find(h => h.id === selectedHero)); showView('battle'); },
+    swap(r1, c1, r2, c2){ return playerMove(r1, c1, r2, c2); },
+    cast(i){ tryCastPlayerSkill(i); },
+    grantMana(n){ if (player){ player.mana = clamp(n, 0, RES_MAX); updateUI(); } },
+    grantRage(n){ if (player){ player.rage = clamp(n, 0, RES_MAX); updateUI(); } },
+    findMove(){
+      const g = board.grid;
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+        for (const [dr, dc] of [[0, 1], [1, 0]]){
+          const r2 = r + dr, c2 = c + dc;
+          if (r2 >= ROWS || c2 >= COLS) continue;
+          const t = g[r][c]; g[r][c] = g[r2][c2]; g[r2][c2] = t;
+          const ok = findMatches(g).runs.length > 0;
+          g[r2][c2] = g[r][c]; g[r][c] = t;
+          if (ok) return { r, c, r2, c2 };
+        }
+      }
+      return null;
+    },
+    getBoard(){ return board ? board.grid.map(row => row.map(t => t ? t.type : null)) : null; },
+    getSkills(){ return player ? player.def.skills.map((sk, i) => ({ i, name: sk.name, type: sk.type, cost: sk.cost, res: player[sk.type] })) : []; },
+  };
+
+  requestAnimationFrame(function loop(now){
+    updateTweens(now);
+    if (inBattle()){ renderBoard($('#board'), board, now); }
+    requestAnimationFrame(loop);
+  });
+
+  showView('menu');
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
