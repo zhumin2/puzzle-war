@@ -173,13 +173,7 @@ button{font-family:inherit; cursor:pointer;}
 }
 .board-box{position:relative; width:100%; max-width:470px; margin-inline:auto; background:var(--bg1); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
 .board-box canvas{display:block; width:100%; aspect-ratio:1/1; height:auto;}
-.board-label{
-  position:absolute; top:8px; left:10px; z-index:4; font-size:11.5px; letter-spacing:2px;
-  color:var(--muted); background:rgba(10,14,23,.75); padding:3px 10px; border-radius:8px; border:1px solid var(--line);
-  pointer-events:none;
-}
 .board-box.player{box-shadow:0 0 0 1px rgba(212,169,78,.28), var(--shadow);}
-.board-box .board-label{color:var(--gold);}
 .turn-banner{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   min-height:34px; padding:5px 12px; border-radius:10px; background:var(--panel); border:1px solid var(--line);
@@ -337,7 +331,7 @@ button{font-family:inherit; cursor:pointer;}
           <span class="tb-combo hidden" id="tbCombo"></span>
           <span class="tb-info" id="tbInfo">第 1 回合</span>
         </div>
-        <div class="board-box player"><div class="board-label">峡谷战场 · 双方共用一个棋盘</div><canvas id="board"></canvas></div>
+        <div class="board-box player"><canvas id="board"></canvas></div>
       </div>
       <aside class="panel side" aria-label="敌方英雄">
         <div class="unit-card enemy" id="eCard"></div>
