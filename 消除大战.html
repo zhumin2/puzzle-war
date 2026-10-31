@@ -1148,7 +1148,31 @@ async function resolveMove(board, onWave){
     if (moves.length) await Promise.all(moves.map(m => animTo(m.t, 'row', m.toR, FALL_MS)));
     await wait(24);
   }
+  if (!ended && !hasValidMove(board.grid)){
+    showToast('player', '无可消除组合，棋盘重置');
+    await resetBoardAnimated(board);
+  }
   return combo;
+}
+
+// 棋盘死局重置：旧宝石淡出 → 重新生成 → 新宝石自上方落下
+async function resetBoardAnimated(bd){
+  const t0 = performance.now();
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    const t = bd.grid[r][c];
+    if (t) bd.fxTiles.push({ row: r, col: c, type: t.type, t0 });
+  }
+  bd.grid = [];
+  await wait(POP_MS + 160);
+  bd.fxTiles = [];
+  bd.regenerate();
+  const moves = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++){
+    const t = bd.grid[r][c];
+    t.row = r - ROWS;
+    moves.push(animTo(t, 'row', r, FALL_MS * 2.2));
+  }
+  await Promise.all(moves);
 }
 
 function showCombo(combo){ const el = $('#tbCombo'); el.textContent = '连击 x' + combo; el.classList.remove('hidden'); }
@@ -1255,9 +1279,8 @@ async function enemyTurn(){
     if (mv){
       await enemySwapResolve(mv);
     } else {
-      board.regenerate();
       showToast('enemy', '棋局洗牌');
-      await wait(260);
+      await resetBoardAnimated(board);
     }
     if (ended) return;
     if (!enemyExtra || extra >= 2) break;
