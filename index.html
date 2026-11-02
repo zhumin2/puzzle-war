@@ -489,33 +489,40 @@ const BOSSES = [
   {
     id:'crab', name:'河道之灵·河蟹', title:'第一试炼 · 峡谷边缘', sigil:'claw', color:'#4fb286',
     hp:130, atk:8, armor:0, crit:0,
+    passive: { name:'硬化甲壳', icon:'shield', desc:'每回合结束回复 2% 最大生命' },
     skills:[
-      { name:'挥钳', type:'rage', cost:25, cd:4, icon:'claw', desc:'攻击×1.5',
+      { name:'挥钳', type:'rage', cost:15, icon:'claw', desc:'攻击×1.5',
         cast(e,p){ return physHit(e,p,1.5); } },
-      { name:'硬化', type:'green', cost:25, cd:5, icon:'shield', desc:'获得 5 点护盾',
+      { name:'硬化', type:'green', cost:20, icon:'shield', desc:'获得 5 点护盾',
         cast(e,p){ return [{type:'shield', v:5}]; } },
+      { name:'蟹皇威压', type:'ult', cost:100, icon:'crown', desc:'攻击×2.5',
+        cast(e,p){ return physHit(e,p,2.5); } },
     ],
   },
   {
     id:'lord', name:'暴君·主宰', title:'第二试炼 · 深渊腹地', sigil:'horn', color:'#a06bff',
     hp:230, atk:11, armor:2, crit:0,
+    passive: { name:'深渊护体', icon:'crown', desc:'每回合结束获得 2 点护盾' },
     skills:[
-      { name:'黑暗冲击', type:'rage', cost:30, cd:4, icon:'bolt', desc:'攻击×2.0',
+      { name:'黑暗冲击', type:'rage', cost:18, icon:'bolt', desc:'攻击×2.0',
         cast(e,p){ return physHit(e,p,2.0); } },
-      { name:'主宰降临', type:'green', cost:40, cd:7, icon:'crown', desc:'回复 10% 最大生命',
+      { name:'主宰降临', type:'green', cost:30, icon:'crown', desc:'回复 10% 最大生命',
         cast(e,p){ const v=Math.round(e.maxHp*0.1); return [{type:'heal', v}]; } },
+      { name:'深渊吞噬', type:'ult', cost:100, icon:'flame', desc:'攻击×3.0',
+        cast(e,p){ return physHit(e,p,3.0); } },
     ],
   },
   {
     id:'dragon', name:'风暴龙王', title:'最终试炼 · 王者之巅', sigil:'crown', color:'#e8c14d',
     hp:330, atk:14, armor:3, crit:0,
+    passive: { name:'雷云护体', icon:'bolt', desc:'每回合结束回复 3% 最大生命' },
     skills:[
-      { name:'龙息', type:'rage', cost:35, cd:4, icon:'flame', desc:'攻击×2.2',
+      { name:'龙息', type:'rage', cost:20, icon:'flame', desc:'攻击×2.2',
         cast(e,p){ return physHit(e,p,2.2); } },
-      { name:'雷暴', type:'mana', cost:30, cd:6, icon:'bolt', desc:'攻击×1.6 并降低我方攻击 25%（1 回合）',
+      { name:'雷暴', type:'mana', cost:20, icon:'bolt', desc:'攻击×1.6 并降低我方攻击 25%（1 回合）',
         cast(e,p){ return [physHit(e,p,1.6)[0], {type:'buff', key:'atkDown', val:0.25, turns:1}]; } },
-      { name:'龙王威压', type:'mana', cost:45, cd:9, icon:'crown', desc:'降低我方攻击 20%（1 回合）',
-        cast(e,p){ return [{type:'buff', key:'atkDown', val:0.2, turns:1}]; } },
+      { name:'龙王审判', type:'ult', cost:100, icon:'star', desc:'攻击×3.5',
+        cast(e,p){ return physHit(e,p,3.5); } },
     ],
   },
 ];
@@ -1006,6 +1013,7 @@ const RES_CN = { mana: '蓝', rage: '红', green: '绿', ult: '紫' };
 function makeUnit(def, side){
   return {
     def, side, name: def.name, title: def.title || '', sigil: def.sigil, color: def.color,
+    passive: def.passive || null,
     maxHp: def.hp, hp: def.hp, atk: def.atk, armor: def.armor, crit: def.crit || 0,
     mana: 0, rage: 0, green: 0, ult: 0, shield: 0, buff: {}, comboBonus: 0,
     skills: (def.skills || []).map(s => ({ ...s, cdLeft: s.cd || 0, cdMax: s.cd || 0 })),
@@ -1119,6 +1127,7 @@ function applyEnemyWave(fx, runs, combo){
   enemy.rage = clamp(enemy.rage + fx.rage, 0, RES_MAX);
   enemy.mana = clamp(enemy.mana + fx.mana, 0, RES_MAX);
   enemy.green = clamp(enemy.green + fx.green, 0, RES_MAX);
+  enemy.ult = clamp(enemy.ult + fx.ult, 0, RES_MAX);
   enemy.shield += fx.shield;
   const nGems = runs.reduce((s, r) => (r.type === 'skull' || r.type === 'star') ? s : s + r.len, 0);
   if (nGems > 0 && enemy.hp < enemy.maxHp){
@@ -1204,6 +1213,15 @@ function startPlayerTurn(){
   tickBuffs(player);
   player.comboBonus = 0;
   playerCanAct = true;
+  if (player.buff.stun){
+    showToast('player', '被眩晕，无法行动');
+    delete player.buff.stun;
+    Sfx.stun();
+    playerCanAct = false; busy = true;
+    updateUI();
+    (async () => { await wait(430); if (ended) return; busy = false; await enemyTurn(); })();
+    return;
+  }
   $('#tbTurn').textContent = '你的回合';
   $('#tbInfo').textContent = '第 ' + gameStats.turns + ' 回合';
   hideCombo();
@@ -1262,6 +1280,20 @@ function applyEndTurnPassive(){
   if (v > 0 && player.hp < player.maxHp){ player.hp = Math.min(player.maxHp, player.hp + v); addFloater('player', { heal: v }); }
 }
 
+// BOSS 回合结束被动（与玩家 applyEndTurnPassive 同一规则）
+function applyEnemyEndPassive(){
+  if (ended) return;
+  let heal = 0, shield = 0;
+  if (enemy.def.id === 'crab') heal = Math.round(enemy.maxHp * .02);
+  else if (enemy.def.id === 'lord') shield = 2;
+  else if (enemy.def.id === 'dragon') heal = Math.round(enemy.maxHp * .03);
+  if (heal > 0 && enemy.hp < enemy.maxHp){
+    enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+    addFloater('enemy', { heal });
+  }
+  if (shield > 0){ enemy.shield += shield; addFloater('enemy', { shield }); }
+}
+
 async function enemyTurn(){
   if (ended) return;
   $('#tbTurn').textContent = '敌方回合';
@@ -1276,10 +1308,6 @@ async function enemyTurn(){
     return;
   }
   tickBuffs(enemy);
-  // BOSS 被动能量回复：每回合各类型 +8（与消除收益共同驱动技能）
-  enemy.rage = clamp(enemy.rage + 8, 0, RES_MAX);
-  enemy.mana = clamp(enemy.mana + 8, 0, RES_MAX);
-  enemy.green = clamp(enemy.green + 8, 0, RES_MAX);
   enemyExtra = false;
   let extra = 0;
   while (!ended){
@@ -1296,23 +1324,19 @@ async function enemyTurn(){
     await wait(140);
   }
   if (ended) return;
-  const r = hitDamage(enemy, player, unitAtk(enemy), {});
-  addFloater('player', { dmg: r.dmg, crit: r.crit });
-  Sfx.damage();
-  updateUI(); checkEnd();
-  if (ended) return;
-  let noEnergy = false;
+  let noEnergy = true;
   for (const sk of enemy.skills){
-    if (sk.cdLeft > 0){ sk.cdLeft--; continue; }
-    if (enemy[sk.type] < sk.cost){ noEnergy = true; continue; }
+    if (enemy[sk.type] < sk.cost) continue;
     enemy[sk.type] -= sk.cost;
     await castSkill(enemy, sk, player);
-    sk.cdLeft = sk.cdMax;
     updateUI(); checkEnd();
+    noEnergy = false;
     break;
   }
   if (noEnergy) showToast('enemy', '能量不足，无法施放技能');
   if (ended) return;
+  applyEnemyEndPassive();
+  updateUI();
   await endEnemyTurn();
 }
 
@@ -1326,11 +1350,13 @@ async function enemySwapResolve(mv){
   Sfx.swap();
   await resolveMove(board, (fx, runs, combo, n) => {
     if (fx.extra) enemyExtra = true;
+    if (combo > 1) enemy.comboBonus = Math.max(enemy.comboBonus, (combo - 1) * .04);
     gameStats.cleared += n;
     if (combo > gameStats.maxCombo) gameStats.maxCombo = combo;
     if (combo > 1){ showCombo(combo); Sfx.cascade(); }
     applyEnemyWave(fx, runs, combo);
   });
+  enemy.comboBonus = 0;
   hideCombo();
 }
 
@@ -1479,7 +1505,7 @@ function buildEnemyCard(){
   const need = {};
   e.skills.forEach(s => { need[s.type] = true; });
   const bars = [
-    ['rage', '红', 'eRage'], ['mana', '蓝', 'eMana'], ['green', '绿', 'eGreen'],
+    ['rage', '红', 'eRage'], ['mana', '蓝', 'eMana'], ['green', '绿', 'eGreen'], ['ult', '紫', 'eUlt'],
   ].filter(([t]) => need[t]).map(([t, cn, id]) =>
     '<div class="bar-row"><span class="lbl">' + cn + '</span><div class="bar bar-' + t + '"><i id="' + id + 'Bar"></i></div><span class="val" id="' + id + 'Text"></span></div>').join('');
   eCardEl.innerHTML =
@@ -1492,17 +1518,20 @@ function buildEnemyCard(){
     bars +
     '<div class="unit-badges" id="eBadges"></div>' +
     '<div class="skills">' +
+      '<div class="skill" title="被动：' + e.passive.desc + '"><span class="sk-ico"><canvas width="34" height="34"></canvas></span>' +
+        '<span class="sk-txt"><b>被动 · ' + e.passive.name + '</b><span>' + e.passive.desc + '</span></span></div>' +
       e.skills.map((s, i) =>
         '<div class="skill" data-i="' + i + '">' +
           '<span class="sk-ico"><canvas width="34" height="34"></canvas></span>' +
           '<span class="sk-txt"><b>' + s.name + '</b><span>' + s.desc + '</span></span>' +
           '<span class="sk-cost">' + RES_CN[s.type] + ' ' + s.cost + '</span>' +
-          '<span class="sk-cd"></span>' +
         '</div>').join('') +
     '</div>' +
     '<div class="e-stage">阶段 <b>' + (stage + 1) + ' / ' + BOSSES.length + '</b></div>';
   drawEmblem(eCardEl.querySelector('.uc-avatar'), e);
-  eCardEl.querySelectorAll('.skill .sk-ico canvas').forEach((cv, i) => drawSkillIcon(cv, e.skills[i].icon, e.color));
+  const icos = eCardEl.querySelectorAll('.skill .sk-ico canvas');
+  drawSkillIcon(icos[0], e.passive.icon, '#c9cedb');
+  e.skills.forEach((s, i) => drawSkillIcon(icos[i + 1], s.icon, e.color));
 }
 
 function updateUI(){
@@ -1523,16 +1552,14 @@ function updateUI(){
   if (enemy){
     setBar('eHpBar', enemy.hp, enemy.maxHp);
     $('#eHpText').textContent = Math.max(0, Math.round(enemy.hp)) + '/' + enemy.maxHp;
-    ['Rage','Mana','Green'].forEach(k => {
+    ['Rage','Mana','Green','Ult'].forEach(k => {
       const bar = $('#e' + k + 'Bar');
       if (bar){ setBar('e' + k + 'Bar', enemy[k.toLowerCase()], RES_MAX); $('#e' + k + 'Text').textContent = Math.round(enemy[k.toLowerCase()]) + '/' + RES_MAX; }
     });
     renderBadges('eBadges', enemy);
     eCardEl.querySelectorAll('.skill[data-i]').forEach(btn => {
       const i = +btn.dataset.i, sk = enemy.skills[i];
-      const cd = btn.querySelector('.sk-cd');
-      cd.textContent = sk.cdLeft > 0 ? 'CD ' + sk.cdLeft : '';
-      const ready = sk.cdLeft <= 0 && enemy[sk.type] >= sk.cost;
+      const ready = enemy[sk.type] >= sk.cost;
       btn.classList.toggle('off', !ready);
       btn.classList.toggle('ready', ready);
     });
