@@ -1001,6 +1001,7 @@ function waveFx(runs){
 // ===== 战斗核心 =====
 const pCardEl = $('#pCard'), eCardEl = $('#eCard');
 let player = null, enemy = null, stage = 0;
+let stageDefs = [];
 let board = null;
 let busy = false, ended = false, playerCanAct = false;
 let enemyExtra = false;
@@ -1129,6 +1130,10 @@ function applyEnemyWave(fx, runs, combo){
   enemy.green = clamp(enemy.green + fx.green, 0, RES_MAX);
   enemy.ult = clamp(enemy.ult + fx.ult, 0, RES_MAX);
   enemy.shield += fx.shield;
+  if (enemy.def.id === 'daji'){
+    const n = runs.filter(r => r.type === 'blue').reduce((s, r) => s + r.len, 0);
+    enemy.mana = clamp(enemy.mana + n, 0, RES_MAX);
+  }
   const nGems = runs.reduce((s, r) => (r.type === 'skull' || r.type === 'star') ? s : s + r.len, 0);
   if (nGems > 0 && enemy.hp < enemy.maxHp){
     const v = Math.min(enemy.maxHp - enemy.hp, nGems);
@@ -1193,12 +1198,21 @@ function hideCombo(){ $('#tbCombo').classList.add('hidden'); }
 
 function startBattle(heroDef){
   stage = 0; lastResultWin = false;
+  // 从玩家角色池随机抽 3 个（排除自选）作为前置对手，全胜后再进入 BOSS 试炼
+  const pool = HEROES.filter(h => h.id !== heroDef.id);
+  const arr = pool.slice();
+  const picked = [];
+  for (let i = 0; i < 3 && arr.length; i++){
+    const j = Math.floor(Math.random() * arr.length);
+    picked.push(arr.splice(j, 1)[0]);
+  }
+  stageDefs = picked.concat(BOSSES);
   initStage(heroDef, 0);
 }
 function initStage(heroDef, stageIdx){
   stage = stageIdx;
   player = makeUnit(heroDef, 'player');
-  enemy = makeUnit(BOSSES[stageIdx], 'enemy');
+  enemy = makeUnit(stageDefs[stageIdx], 'enemy');
   board = new Board();
   gameStats.turns = 1; gameStats.maxCombo = 0; gameStats.cleared = 0;
   ended = false; busy = false;
@@ -1280,13 +1294,15 @@ function applyEndTurnPassive(){
   if (v > 0 && player.hp < player.maxHp){ player.hp = Math.min(player.maxHp, player.hp + v); addFloater('player', { heal: v }); }
 }
 
-// BOSS 回合结束被动（与玩家 applyEndTurnPassive 同一规则）
+// BOSS/敌方英雄回合结束被动（与玩家 applyEndTurnPassive 同一规则）
 function applyEnemyEndPassive(){
   if (ended) return;
   let heal = 0, shield = 0;
   if (enemy.def.id === 'crab') heal = Math.round(enemy.maxHp * .02);
   else if (enemy.def.id === 'lord') shield = 2;
   else if (enemy.def.id === 'dragon') heal = Math.round(enemy.maxHp * .03);
+  else if (enemy.def.id === 'arthur') heal = Math.round(enemy.maxHp * .02);
+  else if (enemy.def.id === 'caiwenji') heal = Math.round(enemy.maxHp * .03);
   if (heal > 0 && enemy.hp < enemy.maxHp){
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
     addFloater('enemy', { heal });
@@ -1409,11 +1425,11 @@ function checkEnd(){
 }
 async function onStageWin(){
   Sfx.win();
-  if (stage >= BOSSES.length - 1){ lastResultWin = true; showResult(true); return; }
+  if (stage >= stageDefs.length - 1){ lastResultWin = true; showResult(true); return; }
   stage++;
   player.hp = Math.min(player.maxHp, player.hp + Math.round(player.maxHp * .3));
   player.buff = {}; player.shield = 0;
-  enemy = makeUnit(BOSSES[stage], 'enemy');
+  enemy = makeUnit(stageDefs[stage], 'enemy');
     board.regenerate();
   buildEnemyCard();
   showStageBanner();
@@ -1527,7 +1543,7 @@ function buildEnemyCard(){
           '<span class="sk-cost">' + RES_CN[s.type] + ' ' + s.cost + '</span>' +
         '</div>').join('') +
     '</div>' +
-    '<div class="e-stage">阶段 <b>' + (stage + 1) + ' / ' + BOSSES.length + '</b></div>';
+    '<div class="e-stage">阶段 <b>' + (stage + 1) + ' / ' + stageDefs.length + '</b></div>';
   drawEmblem(eCardEl.querySelector('.uc-avatar'), e);
   const icos = eCardEl.querySelectorAll('.skill .sk-ico canvas');
   drawSkillIcon(icos[0], e.passive.icon, '#c9cedb');
@@ -1754,7 +1770,7 @@ function init(){
     $('#resultOverlay').classList.add('hidden');
     const hero = HEROES.find(h => h.id === selectedHero);
     if (!hero) return;
-    initStage(hero, lastResultWin ? 0 : stage);
+    if (lastResultWin) startBattle(hero); else initStage(hero, stage);
     showView('battle');
   });
 
